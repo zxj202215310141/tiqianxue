@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>估算</title>
+  <style>
+    :root{--bg:#fff3e0;--card:#ffffff;--accent:#ffb74d;--accent2:#e65100;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .question{font-size:32px;font-weight:bold;color:var(--accent2);margin:20px 0;text-align:center}
+    .hint-text{font-size:18px;color:#636e72;margin-bottom:20px}
+    .options{display:flex;flex-wrap:wrap;gap:15px;justify-content:center;margin:20px 0}
+    .opt-btn{width:120px;height:70px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:15px;border:none;font-size:24px;font-weight:bold;color:white;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(230,81,0,0.3)}
+    .opt-btn:active{transform:scale(0.95)}
+    .opt-btn.correct{background:var(--correct)}
+    .opt-btn.wrong{background:var(--wrong)}
+    .btn{background:linear-gradient(135deg,var(--accent2),#ff7043);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(230,81,0,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.question{font-size:24px}.opt-btn{width:100px;height:60px;font-size:20px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🔢 估算</h1>
+      <p>估算就是大致推算，不需要精确计算。</p>
+      <p style="margin-top:8px">💡 常用方法：四舍五入、凑整、取近似值。</p>
+      <p style="margin-top:8px">🔢 例如：29 × 31 ≈ 30 × 30 = 900</p>
+      <div style="margin-top:16px;padding:12px;background:#ffb74d;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        选择最接近的估算值！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🎯 估算挑战</h2>
+      <div class="hint">选择最接近的估算值</div>
+      
+      <div class="question" id="question">29 × 31 ≈ ?</div>
+      <div class="hint-text" id="hintText">提示：把数字凑成整十数</div>
+      
+      <div class="options" id="options"></div>
+      
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const questionEl = document.getElementById('question')
+    const hintText = document.getElementById('hintText')
+    const optionsEl = document.getElementById('options')
+    const nextBtn = document.getElementById('next')
+    const resetBtn = document.getElementById('reset')
+    const scoreEl = document.getElementById('scoreVal')
+    const messageEl = document.getElementById('message')
+    
+    let score = 0
+    let currentAnswer = 0
+    
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+    
+    function generateQuestion() {
+      const types = ['addition', 'subtraction', 'multiplication', 'division']
+      const type = types[Math.floor(Math.random() * types.length)]
+      
+      let num1, num2, op, exactResult, estimate, questionStr
+      
+      if (type === 'addition') {
+        num1 = Math.floor(Math.random() * 800) + 100
+        num2 = Math.floor(Math.random() * 800) + 100
+        op = '+'
+        exactResult = num1 + num2
+        estimate = Math.round(num1 / 100) * 100 + Math.round(num2 / 100) * 100
+        questionStr = num1 + ' + ' + num2 + ' ≈ ?'
+        hintText.textContent = '提示：把数字凑成整百数'
+      } else if (type === 'subtraction') {
+        num1 = Math.floor(Math.random() * 800) + 200
+        num2 = Math.floor(Math.random() * (num1 - 100)) + 100
+        op = '-'
+        exactResult = num1 - num2
+        estimate = Math.round(num1 / 100) * 100 - Math.round(num2 / 100) * 100
+        questionStr = num1 + ' - ' + num2 + ' ≈ ?'
+        hintText.textContent = '提示：把数字凑成整百数'
+      } else if (type === 'multiplication') {
+        num1 = Math.floor(Math.random() * 80) + 11
+        num2 = Math.floor(Math.random() * 80) + 11
+        op = '×'
+        exactResult = num1 * num2
+        estimate = Math.round(num1 / 10) * 10 * Math.round(num2 / 10) * 10
+        questionStr = num1 + ' × ' + num2 + ' ≈ ?'
+        hintText.textContent = '提示：把数字凑成整十数'
+      } else {
+        num2 = Math.floor(Math.random() * 8) + 2
+        estimate = Math.floor(Math.random() * 90) + 10
+        exactResult = estimate * num2 + Math.floor(Math.random() * num2)
+        num1 = exactResult
+        op = '÷'
+        questionStr = num1 + ' ÷ ' + num2 + ' ≈ ?'
+        hintText.textContent = '提示：找最接近的倍数'
+      }
+      
+      currentAnswer = estimate
+      questionEl.textContent = questionStr
+      messageEl.style.display = 'none'
+      
+      initOptions(estimate, exactResult)
+    }
+    
+    function initOptions(correct, exact) {
+      optionsEl.innerHTML = ''
+      const options = [correct]
+      
+      while (options.length < 4) {
+        let offset = Math.floor(Math.random() * 3) + 1
+        let sign = Math.random() > 0.5 ? 1 : -1
+        
+        let range
+        if (correct < 100) range = 10
+        else if (correct < 1000) range = 50
+        else range = 100
+        
+        let rand = correct + sign * offset * range
+        
+        if (rand > 0 && !options.includes(rand)) options.push(rand)
+      }
+      
+      shuffle(options)
+      
+      options.forEach(opt => {
+        const btn = document.createElement('button')
+        btn.className = 'opt-btn'
+        btn.textContent = opt
+        btn.addEventListener('click', () => {
+          if (opt === correct) {
+            btn.classList.add('correct')
+            messageEl.textContent = '✅ 正确！太棒了！'
+            messageEl.style.color = 'var(--correct)'
+            messageEl.style.display = 'block'
+            setScore(score + 10)
+          } else {
+            btn.classList.add('wrong')
+            messageEl.textContent = '❌ 不对哦，答案是 ' + correct + '！'
+            messageEl.style.color = 'var(--wrong)'
+            messageEl.style.display = 'block'
+          }
+        })
+        optionsEl.appendChild(btn)
+      })
+    }
+    
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        [array[i], array[j]] = [array[j], array[i]]
+      }
+      return array
+    }
+    
+    function init() {
+      score = 0
+      setScore(0)
+      generateQuestion()
+    }
+    
+    nextBtn.addEventListener('click', generateQuestion)
+    resetBtn.addEventListener('click', init)
+    init()
+  </script>
+</body>
+</html>

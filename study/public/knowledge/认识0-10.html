@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>认识0-10</title>
+  <style>
+    :root{--bg:#fef9f3;--card:#ffffff;--accent:#ffd93d;--accent2:#ff9f43;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .puzzle-board{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+    .puzzle-piece{width:70px;height:70px;background:linear-gradient(135deg,var(--accent),#ffeaa7);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:bold;color:#2d3436;cursor:grab;transition:all 0.3s;box-shadow:0 4px 8px rgba(255,217,61,0.4)}
+    .puzzle-piece:active{cursor:grabbing;transform:scale(1.05)}
+    .puzzle-piece.correct{background:linear-gradient(135deg,var(--correct),#55efc4);color:white;animation:pulse 0.5s}
+    .puzzle-piece.empty{background:#f1f2f6;border:3px dashed #b2bec3;color:#b2bec3;cursor:default}
+    .puzzle-targets{display:flex;gap:6px;margin-top:16px}
+    .target-slot{width:50px;height:50px;border:3px dashed #b2bec3;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#636e72}
+    .target-slot.filled{border-color:var(--correct);background:#dfe6e9}
+    .btn{background:linear-gradient(135deg,var(--accent2),#fd79a8);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(255,159,67,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.puzzle-piece{width:60px;height:60px;font-size:24px}}
+    @media(max-width:400px){.puzzle-piece{width:50px;height:50px;font-size:20px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🔢 认识0-10</h1>
+      <p>数字 0 到 10 是我们最早认识的数字。0 表示没有，1 是最小的一位数，10 是第一个两位数（由 1 个十和 0 个一组成）。</p>
+      <p style="margin-top:8px">记住数字的顺序：0、1、2、3、4、5、6、7、8、9、10</p>
+      <div style="margin-top:16px;padding:12px;background:#fff3cd;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        将下方的数字拖拽到正确的目标位置，按顺序排列0-10。完成后会有惊喜哦！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🧩 数字拼图游戏</h2>
+      <div class="hint">把数字拖到正确位置，按顺序排列0-10</div>
+      
+      <div class="puzzle-targets" id="targets"></div>
+      
+      <div class="puzzle-board" id="puzzleBoard"></div>
+      
+      <div class="row">
+        <button id="reset" class="btn">🔄 重置游戏</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const targetsEl = document.getElementById('targets')
+    const boardEl = document.getElementById('puzzleBoard')
+    const scoreEl = document.getElementById('scoreVal')
+    const resetBtn = document.getElementById('reset')
+    const messageEl = document.getElementById('message')
+    
+    let score = 0
+    let numbers = []
+    let placed = {}
+    
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+    
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]]
+      }
+      return array
+    }
+    
+    function init() {
+      score = 0
+      placed = {}
+      setScore(0)
+      messageEl.style.display = 'none'
+      
+      targetsEl.innerHTML = ''
+      for (let i = 0; i <= 10; i++) {
+        const slot = document.createElement('div')
+        slot.className = 'target-slot'
+        slot.dataset.num = i
+        slot.textContent = i
+        slot.addEventListener('dragover', e => e.preventDefault())
+        slot.addEventListener('drop', handleDrop)
+        targetsEl.appendChild(slot)
+      }
+      
+      numbers = shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+      boardEl.innerHTML = ''
+      numbers.forEach(num => {
+        const piece = document.createElement('div')
+        piece.className = 'puzzle-piece'
+        piece.draggable = true
+        piece.textContent = num
+        piece.id = 'piece-' + num
+        piece.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('num', num)
+          piece.style.opacity = '0.5'
+        })
+        piece.addEventListener('dragend', () => {
+          piece.style.opacity = '1'
+        })
+        boardEl.appendChild(piece)
+      })
+    }
+    
+    function handleDrop(e) {
+      e.preventDefault()
+      const num = parseInt(e.dataTransfer.getData('num'))
+      const targetNum = parseInt(e.target.dataset.num)
+      
+      if (placed[num]) return
+      
+      if (num === targetNum) {
+        const piece = document.getElementById('piece-' + num)
+        piece.classList.add('correct')
+        piece.style.opacity = '0'
+        
+        e.target.classList.add('filled')
+        e.target.style.background = 'linear-gradient(135deg,#00b894,#55efc4)'
+        e.target.style.color = 'white'
+        
+        placed[num] = true
+        setScore(score + 10)
+        
+        if (Object.keys(placed).length === 11) {
+          setTimeout(() => {
+            messageEl.textContent = '🎉 太棒了！你完成了数字拼图！'
+            messageEl.style.display = 'block'
+            messageEl.style.color = '#fd79a8'
+          }, 300)
+        }
+      } else {
+        e.target.style.borderColor = 'var(--wrong)'
+        setTimeout(() => {
+          e.target.style.borderColor = '#b2bec3'
+        }, 500)
+        setScore(Math.max(0, score - 5))
+      }
+    }
+    
+    resetBtn.addEventListener('click', init)
+    init()
+  </script>
+</body>
+</html>

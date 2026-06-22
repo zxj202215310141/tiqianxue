@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>解方程</title>
+  <style>
+    :root{--bg:#e8eaf6;--card:#ffffff;--accent:#9fa8da;--accent2:#3949ab;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .question{font-size:28px;font-weight:bold;color:var(--accent2);margin:20px 0;text-align:center}
+    .options{display:flex;flex-wrap:wrap;gap:15px;justify-content:center;margin:20px 0}
+    .opt-btn{width:120px;height:60px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:15px;border:none;font-size:24px;font-weight:bold;color:white;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(57,73,171,0.3)}
+    .opt-btn:active{transform:scale(0.95)}
+    .opt-btn.correct{background:var(--correct)}
+    .opt-btn.wrong{background:var(--wrong)}
+    .btn{background:linear-gradient(135deg,var(--accent2),#5c6bc0);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(57,73,171,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.question{font-size:22px}.opt-btn{width:100px;height:50px;font-size:20px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🔍 解方程</h1>
+      <p>解方程就是求出方程中未知数的值。</p>
+      <p style="margin-top:8px">💡 等式两边同时加上或减去同一个数，等式仍然成立。</p>
+      <p style="margin-top:8px">💡 等式两边同时乘或除以同一个不为0的数，等式仍然成立。</p>
+      <div style="margin-top:16px;padding:12px;background:#9fa8da;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        解出方程中x的值！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🔍 解方程挑战</h2>
+      <div class="hint">选择正确的x值</div>
+      
+      <div class="question" id="question">x + 8 = 15</div>
+      
+      <div class="options" id="options"></div>
+      
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+      
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questionEl = document.getElementById('question')
+    const optionsEl = document.getElementById('options')
+    const nextBtn = document.getElementById('next')
+    const resetBtn = document.getElementById('reset')
+    const scoreEl = document.getElementById('scoreVal')
+    const messageEl = document.getElementById('message')
+    
+    let score = 0
+    let currentAnswer = ''
+    
+    const questions = [
+      { text: 'x + 8 = 15', options: ['6', '7', '8', '23'], answer: '7' },
+      { text: 'x - 5 = 10', options: ['5', '10', '15', '50'], answer: '15' },
+      { text: '2x = 18', options: ['9', '16', '20', '36'], answer: '9' },
+      { text: 'x ÷ 4 = 5', options: ['1', '4', '5', '20'], answer: '20' },
+      { text: 'x + 12 = 25', options: ['12', '13', '14', '37'], answer: '13' },
+      { text: '3x = 21', options: ['6', '7', '8', '63'], answer: '7' },
+      { text: 'x - 7 = 9', options: ['2', '7', '9', '16'], answer: '16' },
+      { text: 'x ÷ 3 = 7', options: ['3', '7', '10', '21'], answer: '21' },
+      { text: '5x = 30', options: ['5', '6', '7', '150'], answer: '6' },
+      { text: 'x + 20 = 35', options: ['10', '15', '20', '55'], answer: '15' },
+      { text: 'x - 15 = 20', options: ['5', '15', '20', '35'], answer: '35' },
+      { text: 'x ÷ 5 = 8', options: ['3', '5', '8', '40'], answer: '40' },
+      { text: '4x = 28', options: ['6', '7', '8', '112'], answer: '7' },
+      { text: 'x + 18 = 40', options: ['18', '22', '24', '58'], answer: '22' },
+      { text: 'x - 12 = 18', options: ['6', '12', '18', '30'], answer: '30' },
+      { text: '6x = 42', options: ['6', '7', '8', '252'], answer: '7' },
+      { text: 'x ÷ 6 = 9', options: ['3', '6', '9', '54'], answer: '54' },
+      { text: 'x + 9 = 27', options: ['9', '18', '20', '36'], answer: '18' },
+      { text: '7x = 49', options: ['6', '7', '8', '343'], answer: '7' },
+      { text: 'x - 8 = 16', options: ['8', '16', '24', '128'], answer: '24' }
+    ]
+    
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+    
+    function generateQuestion() {
+      const index = Math.floor(Math.random() * questions.length)
+      const q = questions[index]
+      currentAnswer = q.answer
+      
+      questionEl.textContent = q.text
+      messageEl.style.display = 'none'
+      
+      optionsEl.innerHTML = ''
+      q.options.forEach(opt => {
+        const btn = document.createElement('button')
+        btn.className = 'opt-btn'
+        btn.textContent = 'x=' + opt
+        btn.addEventListener('click', () => {
+          if (opt === currentAnswer) {
+            btn.classList.add('correct')
+            messageEl.textContent = '✅ 正确！太棒了！'
+            messageEl.style.color = 'var(--correct)'
+            messageEl.style.display = 'block'
+            setScore(score + 10)
+          } else {
+            btn.classList.add('wrong')
+            messageEl.textContent = '❌ 不对哦，正确答案是 x=' + currentAnswer + '！'
+            messageEl.style.color = 'var(--wrong)'
+            messageEl.style.display = 'block'
+          }
+        })
+        optionsEl.appendChild(btn)
+      })
+    }
+    
+    function init() {
+      score = 0
+      setScore(0)
+      generateQuestion()
+    }
+    
+    nextBtn.addEventListener('click', generateQuestion)
+    resetBtn.addEventListener('click', init)
+    init()
+  </script>
+</body>
+</html>

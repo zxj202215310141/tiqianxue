@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>分数的认识</title>
+  <style>
+    :root{--bg:#fffef5;--card:#ffffff;--accent:#ffeaa7;--accent2:#fdcb6e;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .pizza-container{position:relative;width:200px;height:200px;margin:20px auto}
+    .pizza{width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,#fdcb6e,#ffeaa7);position:relative;box-shadow:0 4px 12px rgba(253,203,110,0.4)}
+    .pizza-slice{position:absolute;width:50%;height:50%;transform-origin:bottom right;clip-path:polygon(0 0, 100% 0, 100% 100%)}
+    .pizza-topping{position:absolute;width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,#e17055,#fd79a8);opacity:0;transition:opacity 0.3s}
+    .fraction-display{font-size:36px;font-weight:bold;color:var(--accent2);margin:20px 0}
+    .fraction-parts{display:flex;gap:8px;align-items:center;justify-content:center;margin:16px 0}
+    .fraction-part{display:flex;flex-direction:column;align-items:center}
+    .fraction-label{font-size:14px;color:#636e72;margin-bottom:8px}
+    .fraction-options{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+    .fraction-option{width:50px;height:50px;background:linear-gradient(135deg,var(--accent),#fff);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:bold;color:#2d3436;cursor:grab;transition:all 0.3s;box-shadow:0 4px 8px rgba(253,203,110,0.4)}
+    .fraction-option:active{transform:scale(1.1)}
+    .btn{background:linear-gradient(135deg,var(--accent2),#fd79a8);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(253,203,110,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.pizza-container{width:180px;height:180px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🍕 分数的认识</h1>
+      <p>分数用来表示"几分之几"。例如 1/2 表示把一个东西平均分成 2 份，取其中的 1 份。上面的数字叫分子，下面的数字叫分母。</p>
+      <p style="margin-top:8px">📖 分数的读法：先读分母，再读分子。如 3/4 读作"四分之三"。</p>
+      <div style="margin-top:16px;padding:12px;background:#ffeaa7;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        观察披萨被吃掉了多少份，把正确的分数拖到对应的位置！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🍕 披萨分数</h2>
+      <div class="hint">观察披萨，拖拽正确的分数</div>
+      
+      <div class="pizza-container" id="pizzaContainer">
+        <div class="pizza" id="pizza"></div>
+      </div>
+      
+      <div class="fraction-display" id="fractionDisplay">
+        <span id="numerator" style="border-bottom:3px solid var(--accent2);padding-bottom:4px">?</span>
+        <span style="font-size:20px;margin:0 4px">/</span>
+        <span id="denominator">?</span>
+      </div>
+      
+      <div class="fraction-parts">
+        <div class="fraction-part">
+          <div class="fraction-label">分子（吃掉的份数）</div>
+          <div class="fraction-options" id="numeratorOptions"></div>
+        </div>
+        <div class="fraction-part">
+          <div class="fraction-label">分母（总份数）</div>
+          <div class="fraction-options" id="denominatorOptions"></div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const pizza = document.getElementById('pizza')
+    const numeratorEl = document.getElementById('numerator')
+    const denominatorEl = document.getElementById('denominator')
+    const numeratorOptions = document.getElementById('numeratorOptions')
+    const denominatorOptions = document.getElementById('denominatorOptions')
+    const nextBtn = document.getElementById('next')
+    const resetBtn = document.getElementById('reset')
+    const scoreEl = document.getElementById('scoreVal')
+    const messageEl = document.getElementById('message')
+    
+    let score = 0
+    let currentNumerator = 0
+    let currentDenominator = 0
+    let selectedNumerator = null
+    let selectedDenominator = null
+    
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+    
+    function drawPizza(numerator, denominator) {
+      pizza.innerHTML = ''
+      
+      for (let i = 0; i < denominator; i++) {
+        const slice = document.createElement('div')
+        slice.className = 'pizza-slice'
+        slice.style.transform = `rotate(${i * (360 / denominator)}deg)`
+        
+        const topping = document.createElement('div')
+        topping.className = 'pizza-topping'
+        topping.style.opacity = i < numerator ? '0' : '1'
+        
+        slice.appendChild(topping)
+        pizza.appendChild(slice)
+      }
+    }
+    
+    function generateQuestion() {
+      selectedNumerator = null
+      selectedDenominator = null
+      numeratorEl.textContent = '?'
+      denominatorEl.textContent = '?'
+      numeratorEl.style.borderColor = 'var(--accent2)'
+      denominatorEl.style.borderColor = 'var(--accent2)'
+      messageEl.style.display = 'none'
+      
+      currentDenominator = Math.floor(Math.random() * 4) + 2
+      currentNumerator = Math.floor(Math.random() * currentDenominator) + 1
+      
+      drawPizza(currentNumerator, currentDenominator)
+      
+      const numOptions = []
+      for (let i = 1; i <= currentDenominator; i++) {
+        numOptions.push(i)
+      }
+      shuffle(numOptions)
+      
+      numeratorOptions.innerHTML = ''
+      numOptions.slice(0, 4).forEach(opt => {
+        const el = document.createElement('div')
+        el.className = 'fraction-option'
+        el.draggable = true
+        el.textContent = opt
+        el.id = 'num-' + opt
+        el.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('type', 'numerator')
+          e.dataTransfer.setData('val', opt)
+          el.style.opacity = '0.5'
+        })
+        el.addEventListener('dragend', () => {
+          el.style.opacity = '1'
+        })
+        numeratorOptions.appendChild(el)
+      })
+      
+      const denOptions = []
+      for (let i = 2; i <= 6; i++) {
+        denOptions.push(i)
+      }
+      if (!denOptions.includes(currentDenominator)) {
+        denOptions[Math.floor(Math.random() * denOptions.length)] = currentDenominator
+      }
+      shuffle(denOptions)
+      
+      denominatorOptions.innerHTML = ''
+      denOptions.slice(0, 4).forEach(opt => {
+        const el = document.createElement('div')
+        el.className = 'fraction-option'
+        el.draggable = true
+        el.textContent = opt
+        el.id = 'den-' + opt
+        el.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('type', 'denominator')
+          e.dataTransfer.setData('val', opt)
+          el.style.opacity = '0.5'
+        })
+        el.addEventListener('dragend', () => {
+          el.style.opacity = '1'
+        })
+        denominatorOptions.appendChild(el)
+      })
+    }
+    
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]]
+      }
+      return array
+    }
+    
+    function checkAnswer() {
+      if (selectedNumerator === currentNumerator && selectedDenominator === currentDenominator) {
+        messageEl.textContent = '✅ 答对了！你真是分数小达人！'
+        messageEl.style.color = 'var(--correct)'
+        messageEl.style.display = 'block'
+        setScore(score + 10)
+        setTimeout(() => {
+          nextQuestion()
+        }, 1000)
+      } else if (selectedNumerator === currentNumerator) {
+        messageEl.textContent = '🍕 分子对了，再看看分母！'
+        messageEl.style.color = '#fdcb6e'
+        messageEl.style.display = 'block'
+      } else if (selectedDenominator === currentDenominator) {
+        messageEl.textContent = '🍕 分母对了，再看看分子！'
+        messageEl.style.color = '#fdcb6e'
+        messageEl.style.display = 'block'
+      }
+    }
+    
+    numeratorEl.addEventListener('dragover', e => e.preventDefault())
+    numeratorEl.addEventListener('drop', e => {
+      e.preventDefault()
+      const type = e.dataTransfer.getData('type')
+      const val = parseInt(e.dataTransfer.getData('val'))
+      
+      if (type === 'numerator') {
+        selectedNumerator = val
+        numeratorEl.textContent = val
+        if (selectedNumerator === currentNumerator) {
+          numeratorEl.style.color = 'var(--correct)'
+        }
+      }
+      
+      if (selectedNumerator !== null && selectedDenominator !== null) {
+        checkAnswer()
+      }
+    })
+    
+    denominatorEl.addEventListener('dragover', e => e.preventDefault())
+    denominatorEl.addEventListener('drop', e => {
+      e.preventDefault()
+      const type = e.dataTransfer.getData('type')
+      const val = parseInt(e.dataTransfer.getData('val'))
+      
+      if (type === 'denominator') {
+        selectedDenominator = val
+        denominatorEl.textContent = val
+        if (selectedDenominator === currentDenominator) {
+          denominatorEl.style.color = 'var(--correct)'
+        }
+      }
+      
+      if (selectedNumerator !== null && selectedDenominator !== null) {
+        checkAnswer()
+      }
+    })
+    
+    function nextQuestion() {
+      generateQuestion()
+    }
+    
+    function init() {
+      score = 0
+      setScore(0)
+      generateQuestion()
+    }
+    
+    nextBtn.addEventListener('click', nextQuestion)
+    resetBtn.addEventListener('click', init)
+    init()
+  </script>
+</body>
+</html>

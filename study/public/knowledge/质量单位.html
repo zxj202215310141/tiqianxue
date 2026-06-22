@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>质量单位</title>
+  <style>
+    :root{--bg:#fce4ec;--card:#ffffff;--accent:#f48fb1;--accent2:#e91e63;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .claw-machine{background:linear-gradient(180deg,#90caf9,#42a5f5);border-radius:16px;padding:20px;margin:16px 0;width:100%;min-height:200px;position:relative;overflow:hidden}
+    .claw{position:absolute;width:40px;height:40px;background:var(--accent2);clip-path:polygon(50% 0%, 0% 100%, 100% 100%);left:50%;top:20px;transform:translateX(-50%);cursor:move;z-index:10}
+    .claw-line{position:absolute;width:4px;height:60px;background:#5d4037;left:50%;top:0;transform:translateX(-50%)}
+    .item{position:absolute;font-size:32px;cursor:pointer;transition:transform 0.2s}
+    .item:hover{transform:scale(1.1)}
+    .item.catched{opacity:0}
+    .target-box{background:#fff3e0;border-radius:12px;padding:12px;margin-top:16px;width:100%;min-height:60px;border:3px dashed #ffb74d;text-align:center}
+    .question{font-size:20px;font-weight:bold;color:var(--accent2);margin:16px 0;text-align:center}
+    .btn{background:linear-gradient(135deg,var(--accent2),#f48fb1);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(233,30,99,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.item{font-size:24px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>⚖️ 质量单位</h1>
+      <p>常用质量单位：克（g）、千克（kg）、吨（t）。</p>
+      <p style="margin-top:8px">🔢 换算关系：1000 g = 1 kg，1000 kg = 1 t。</p>
+      <p style="margin-top:8px">💡 生活中的例子：一个鸡蛋约50克，一个西瓜约5千克，一辆卡车约5吨。</p>
+      <div style="margin-top:16px;padding:12px;background:#f48fb1;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        抓娃娃机！拖动爪子抓住正确的物品。看看你能抓住多少！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🧸 抓娃娃机</h2>
+      <div class="hint">拖动爪子抓住正确的物品</div>
+      
+      <div class="question" id="question">请抓住：约1千克的物品</div>
+      
+      <div class="claw-machine" id="machine">
+        <div class="claw-line"></div>
+        <div class="claw" id="claw"></div>
+        <div class="item" data-weight="50">🥚 鸡蛋(50g)</div>
+        <div class="item" data-weight="1000">🍉 西瓜(1kg)</div>
+        <div class="item" data-weight="5000000">🚛 卡车(5t)</div>
+      </div>
+      
+      <div class="target-box" id="targetBox">抓住的物品：</div>
+      
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const questionEl = document.getElementById('question')
+    const machine = document.getElementById('machine')
+    const claw = document.getElementById('claw')
+    const targetBox = document.getElementById('targetBox')
+    const nextBtn = document.getElementById('next')
+    const resetBtn = document.getElementById('reset')
+    const scoreEl = document.getElementById('scoreVal')
+    const messageEl = document.getElementById('message')
+    
+    let score = 0
+    let currentAnswer = 0
+    let isDragging = false
+    
+    const questions = [
+      { q: '请抓住：约50克的物品', items: [{ emoji: '🥚', name: '鸡蛋', weight: 50 }, { emoji: '🍉', name: '西瓜', weight: 1000 }, { emoji: '🚛', name: '卡车', weight: 5000000 }], answer: 50 },
+      { q: '请抓住：约1千克的物品', items: [{ emoji: '🍎', name: '苹果', weight: 100 }, { emoji: '🐱', name: '小猫', weight: 3000 }, { emoji: '🍉', name: '西瓜', weight: 1000 }], answer: 1000 },
+      { q: '请抓住：约5吨的物品', items: [{ emoji: '🏠', name: '房子', weight: 1000000 }, { emoji: '🚛', name: '卡车', weight: 5000000 }, { emoji: '🐘', name: '大象', weight: 5000000 }], answer: 5000000 },
+      { q: '请抓住：约100克的物品', items: [{ emoji: '🥚', name: '鸡蛋', weight: 50 }, { emoji: '🍎', name: '苹果', weight: 100 }, { emoji: '🍌', name: '香蕉', weight: 150 }], answer: 100 },
+      { q: '请抓住：约3千克的物品', items: [{ emoji: '🐱', name: '小猫', weight: 3000 }, { emoji: '🍉', name: '西瓜', weight: 1000 }, { emoji: '🐶', name: '小狗', weight: 5000 }], answer: 3000 }
+    ]
+    
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+    
+    function initMachine(items) {
+      machine.innerHTML = '<div class="claw-line"></div><div class="claw" id="claw"></div>'
+      
+      items.forEach((item, i) => {
+        const el = document.createElement('div')
+        el.className = 'item'
+        el.textContent = item.emoji + ' ' + item.name + '(' + formatWeight(item.weight) + ')'
+        el.dataset.weight = item.weight
+        el.style.left = (15 + i * 30) + '%'
+        el.style.top = '60%'
+        
+        machine.appendChild(el)
+      })
+      
+      const newClaw = document.getElementById('claw')
+      initClaw(newClaw)
+    }
+    
+    function formatWeight(w) {
+      if (w >= 1000000) return (w / 1000000) + 't'
+      if (w >= 1000) return (w / 1000) + 'kg'
+      return w + 'g'
+    }
+    
+    function initClaw(clawEl) {
+      let startX, startLeft
+      
+      clawEl.addEventListener('mousedown', e => {
+        isDragging = true
+        startX = e.clientX
+        startLeft = parseFloat(getComputedStyle(clawEl).left)
+      })
+      
+      clawEl.addEventListener('touchstart', e => {
+        isDragging = true
+        startX = e.touches[0].clientX
+        startLeft = parseFloat(getComputedStyle(clawEl).left)
+      })
+      
+      document.addEventListener('mousemove', e => {
+        if (!isDragging) return
+        const deltaX = e.clientX - startX
+        let newLeft = startLeft + deltaX
+        newLeft = Math.max(5, Math.min(85, newLeft))
+        clawEl.style.left = newLeft + '%'
+      })
+      
+      document.addEventListener('touchmove', e => {
+        if (!isDragging) return
+        const deltaX = e.touches[0].clientX - startX
+        let newLeft = startLeft + deltaX
+        newLeft = Math.max(5, Math.min(85, newLeft))
+        clawEl.style.left = newLeft + '%'
+      })
+      
+      document.addEventListener('mouseup', () => {
+        if (!isDragging) return
+        isDragging = false
+        checkCatch(clawEl)
+      })
+      
+      document.addEventListener('touchend', () => {
+        if (!isDragging) return
+        isDragging = false
+        checkCatch(clawEl)
+      })
+    }
+    
+    function checkCatch(clawEl) {
+      const clawLeft = parseFloat(clawEl.style.left)
+      const items = document.querySelectorAll('.item:not(.catched)')
+      
+      for (const item of items) {
+        const itemLeft = parseFloat(item.style.left)
+        if (Math.abs(clawLeft - itemLeft) < 15) {
+          const weight = parseInt(item.dataset.weight)
+          if (weight === currentAnswer) {
+            item.classList.add('catched')
+            clawEl.style.top = '70%'
+            setTimeout(() => {
+              clawEl.style.top = '20px'
+            }, 500)
+            
+            const matched = document.createElement('span')
+            matched.textContent = item.textContent + ' '
+            targetBox.appendChild(matched)
+            
+            messageEl.textContent = '✅ 抓住了！太棒了！'
+            messageEl.style.color = 'var(--correct)'
+            messageEl.style.display = 'block'
+            setScore(score + 10)
+            
+            setTimeout(() => {
+              nextQuestion()
+            }, 1500)
+          } else {
+            messageEl.textContent = '❌ 不是这个哦！'
+            messageEl.style.color = 'var(--wrong)'
+            messageEl.style.display = 'block'
+          }
+          return
+        }
+      }
+      
+      messageEl.textContent = '❌ 没抓到！再试试！'
+      messageEl.style.color = 'var(--wrong)'
+      messageEl.style.display = 'block'
+    }
+    
+    function generateQuestion() {
+      const idx = Math.floor(Math.random() * questions.length)
+      const q = questions[idx]
+      currentAnswer = q.answer
+      
+      questionEl.textContent = q.q
+      targetBox.innerHTML = '抓住的物品：'
+      messageEl.style.display = 'none'
+      
+      initMachine(q.items)
+    }
+    
+    function nextQuestion() {
+      generateQuestion()
+    }
+    
+    function init() {
+      score = 0
+      setScore(0)
+      generateQuestion()
+    }
+    
+    nextBtn.addEventListener('click', nextQuestion)
+    resetBtn.addEventListener('click', init)
+    init()
+  </script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>小数的认识</title>
+  <style>
+    :root{--bg:#f3e5f5;--card:#ffffff;--accent:#ce93d8;--accent2:#7b1fa2;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .decimal-board{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0;justify-content:center;width:100%;align-items:center}
+    .digit-box{width:60px;height:60px;border:3px dashed var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:var(--accent2)}
+    .digit-box.filled{border-color:var(--correct);background:var(--correct);color:white}
+    .decimal-point{width:40px;height:40px;background:linear-gradient(135deg,var(--accent2),#ab47bc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:white;cursor:grab;transition:transform 0.2s}
+    .decimal-point:active{cursor:grabbing;transform:scale(1.2)}
+    .point-slot{width:40px;height:40px;border:3px dashed var(--accent2);border-radius:50%;display:flex;align-items:center;justify-content:center}
+    .point-slot.filled{border-color:var(--correct);background:var(--correct)}
+    .question{font-size:24px;font-weight:bold;color:var(--accent2);margin:16px 0;text-align:center}
+    .btn{background:linear-gradient(135deg,var(--accent2),#ab47bc);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(123,31,162,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    .fraction-bar{width:200px;height:4px;background:var(--accent);margin:16px auto;border-radius:2px}
+    .fraction-label{display:flex;justify-content:center;gap:4px;font-size:14px;color:#636e72}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.digit-box{width:50px;height:50px;font-size:20px}.decimal-point,.point-slot{width:35px;height:35px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🔢 小数的认识</h1>
+      <p>像0.5、1.23、3.14这样的数叫做小数。</p>
+      <p style="margin-top:8px">💡 小数点左边是整数部分，右边是小数部分。</p>
+      <p style="margin-top:8px">🔢 1/10 = 0.1，1/100 = 0.01，1/1000 = 0.001</p>
+      <div style="margin-top:16px;padding:12px;background:#ce93d8;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        小数点拖拽！拖动小数点到正确位置组成小数。
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🔢 小数点拖拽</h2>
+      <div class="hint">拖动小数点到正确位置</div>
+      
+      <div class="question" id="question">请组成小数：3.14</div>
+      
+      <div class="fraction-bar"></div>
+      <div class="fraction-label">
+        <span>整数部分</span>
+        <span>·</span>
+        <span>小数部分</span>
+      </div>
+      
+      <div class="decimal-board" id="board"></div>
+      
+      <div class="decimal-board" id="pieces"></div>
+      
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const questionEl = document.getElementById('question')
+    const board = document.getElementById('board')
+    const pieces = document.getElementById('pieces')
+    const nextBtn = document.getElementById('next')
+    const resetBtn = document.getElementById('reset')
+    const scoreEl = document.getElementById('scoreVal')
+    const messageEl = document.getElementById('message')
+    
+    let score = 0
+    let currentDecimal = ''
+    let pointPlaced = false
+    
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+    
+    function initBoard(numStr) {
+      board.innerHTML = ''
+      pointPlaced = false
+      
+      for (let i = 0; i < numStr.length; i++) {
+        const char = numStr[i]
+        const el = document.createElement('div')
+        
+        if (char === '.') {
+          el.className = 'point-slot'
+          el.dataset.type = 'point'
+        } else {
+          el.className = 'digit-box'
+          el.textContent = char
+          el.dataset.type = 'digit'
+          el.dataset.value = char
+        }
+        
+        el.addEventListener('dragover', e => e.preventDefault())
+        el.addEventListener('drop', handleDrop)
+        
+        board.appendChild(el)
+      }
+    }
+    
+    function initPieces(numStr) {
+      pieces.innerHTML = ''
+      
+      const point = document.createElement('div')
+      point.className = 'decimal-point'
+      point.textContent = '.'
+      point.draggable = true
+      point.dataset.type = 'point'
+      
+      point.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('type', 'point')
+        point.style.opacity = '0.5'
+      })
+      
+      point.addEventListener('dragend', () => {
+        point.style.opacity = '1'
+      })
+      
+      pieces.appendChild(point)
+    }
+    
+    function handleDrop(e) {
+      const type = e.dataTransfer.getData('type')
+      
+      if (type === 'point' && e.target.dataset.type === 'point') {
+        e.target.classList.add('filled')
+        e.target.textContent = '.'
+        pointPlaced = true
+        
+        checkAnswer()
+      }
+    }
+    
+    function checkAnswer() {
+      const elements = board.children
+      let result = ''
+      
+      for (let i = 0; i < elements.length; i++) {
+        result += elements[i].textContent
+      }
+      
+      if (result === currentDecimal) {
+        messageEl.textContent = '✅ 正确！太棒了！'
+        messageEl.style.color = 'var(--correct)'
+        messageEl.style.display = 'block'
+        setScore(score + 10)
+        
+        setTimeout(() => {
+          nextQuestion()
+        }, 1000)
+      }
+    }
+    
+    function generateQuestion() {
+      const integerPart = Math.floor(Math.random() * 100)
+      const decimalPart = Math.floor(Math.random() * 100)
+      
+      currentDecimal = integerPart + '.' + decimalPart.padStart(2, '0')
+      
+      questionEl.textContent = '请组成小数：' + currentDecimal
+      messageEl.style.display = 'none'
+      
+      const displayStr = currentDecimal.replace('.', ' ')
+      initBoard(displayStr)
+      initPieces(currentDecimal)
+    }
+    
+    function nextQuestion() {
+      generateQuestion()
+    }
+    
+    function init() {
+      score = 0
+      setScore(0)
+      generateQuestion()
+    }
+    
+    nextBtn.addEventListener('click', nextQuestion)
+    resetBtn.addEventListener('click', init)
+    init()
+  </script>
+</body>
+</html>

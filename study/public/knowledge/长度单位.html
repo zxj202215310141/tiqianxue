@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>长度单位</title>
+  <style>
+    :root{--bg:#e8f5e9;--card:#ffffff;--accent:#81c784;--accent2:#43a047;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .pond{background:linear-gradient(180deg,#81d4fa,#4fc3f7);border-radius:16px;padding:20px;margin:16px 0;width:100%;position:relative;min-height:200px;overflow:hidden}
+    .fish{position:absolute;font-size:36px;cursor:pointer;transition:transform 0.3s;animation:swim 3s ease-in-out infinite}
+    .fish:hover{transform:scale(1.2)}
+    .fish.caught{animation:none;opacity:0.5}
+    .fishing-rod{background:#8d6e63;color:#5d4037;padding:10px 20px;border-radius:10px;font-weight:bold;margin-bottom:16px;cursor:pointer;transition:transform 0.2s}
+    .fishing-rod:hover{transform:scale(1.05)}
+    .catch-area{background:#fff3e0;border-radius:12px;padding:16px;margin-top:16px;width:100%;min-height:80px;border:3px dashed #ffb74d}
+    .matched-item{display:inline-block;background:#81c784;color:white;padding:8px 12px;border-radius:8px;margin:4px;font-weight:bold}
+    .question{font-size:24px;font-weight:bold;color:var(--accent2);margin:16px 0;text-align:center}
+    .btn{background:linear-gradient(135deg,var(--accent2),#81c784);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(67,160,71,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @keyframes swim{0%,100%{transform:translateX(0)}50%{transform:translateX(10px)}}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.fish{font-size:28px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>📏 长度单位</h1>
+      <p>常用长度单位：毫米（mm）、厘米（cm）、分米（dm）、米（m）、千米（km）。</p>
+      <p style="margin-top:8px">🔢 换算关系：10 mm = 1 cm，10 cm = 1 dm，10 dm = 1 m，1000 m = 1 km。</p>
+      <div style="margin-top:16px;padding:12px;background:#81c784;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        钓鱼游戏！根据题目要求，点击钓到正确的长度单位鱼。看看你能钓多少条！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🎣 钓鱼游戏</h2>
+      <div class="hint">点击钓鱼，选择正确的长度单位</div>
+      
+      <div class="question" id="question">请找出：1米 = ? 厘米</div>
+      
+      <div class="pond" id="pond">
+        <div class="fish" data-unit="10">🐟 10</div>
+        <div class="fish" data-unit="100">🐠 100</div>
+        <div class="fish" data-unit="1000">🐡 1000</div>
+      </div>
+      
+      <div class="catch-area" id="catchArea">钓到的鱼：</div>
+      
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const questionEl = document.getElementById('question')
+    const pond = document.getElementById('pond')
+    const catchArea = document.getElementById('catchArea')
+    const nextBtn = document.getElementById('next')
+    const resetBtn = document.getElementById('reset')
+    const scoreEl = document.getElementById('scoreVal')
+    const messageEl = document.getElementById('message')
+    
+    let score = 0
+    let currentQuestion = null
+    let currentAnswer = 0
+    
+    const questions = [
+      { q: '1米 = ? 厘米', options: [10, 100, 1000], answer: 100 },
+      { q: '1千米 = ? 米', options: [100, 1000, 10], answer: 1000 },
+      { q: '1厘米 = ? 毫米', options: [10, 100, 1], answer: 10 },
+      { q: '1分米 = ? 厘米', options: [100, 10, 1000], answer: 10 },
+      { q: '1米 = ? 分米', options: [100, 10, 1000], answer: 10 },
+      { q: '100厘米 = ? 米', options: [10, 1, 100], answer: 1 },
+      { q: '10毫米 = ? 厘米', options: [100, 10, 1], answer: 1 },
+      { q: '1000米 = ? 千米', options: [10, 100, 1], answer: 1 }
+    ]
+    
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+    
+    function initPond(options) {
+      pond.innerHTML = ''
+      const fishes = ['🐟', '🐠', '🐡', '🐋', '🦈']
+      
+      options.forEach((opt, i) => {
+        const fish = document.createElement('div')
+        fish.className = 'fish'
+        fish.textContent = fishes[i % fishes.length] + ' ' + opt
+        fish.dataset.unit = opt
+        fish.style.left = Math.random() * 70 + '%'
+        fish.style.top = Math.random() * 60 + '%'
+        fish.style.animationDelay = Math.random() * 2 + 's'
+        
+        fish.addEventListener('click', () => {
+          if (fish.classList.contains('caught')) return
+          
+          if (parseInt(fish.dataset.unit) === currentAnswer) {
+            fish.classList.add('caught')
+            fish.style.opacity = '0.5'
+            fish.style.transform = 'scale(1.2)'
+            
+            const matched = document.createElement('div')
+            matched.className = 'matched-item'
+            matched.textContent = fish.textContent
+            catchArea.appendChild(matched)
+            
+            messageEl.textContent = '✅ 钓到了正确的鱼！'
+            messageEl.style.color = 'var(--correct)'
+            messageEl.style.display = 'block'
+            setScore(score + 10)
+            
+            setTimeout(() => {
+              nextQuestion()
+            }, 1000)
+          } else {
+            fish.style.transform = 'scale(0.8)'
+            setTimeout(() => {
+              fish.style.transform = 'scale(1)'
+            }, 300)
+            messageEl.textContent = '❌ 这条鱼不对哦，再试试！'
+            messageEl.style.color = 'var(--wrong)'
+            messageEl.style.display = 'block'
+          }
+        })
+        
+        pond.appendChild(fish)
+      })
+    }
+    
+    function generateQuestion() {
+      const idx = Math.floor(Math.random() * questions.length)
+      currentQuestion = questions[idx]
+      currentAnswer = currentQuestion.answer
+      
+      questionEl.textContent = currentQuestion.q
+      catchArea.innerHTML = '钓到的鱼：'
+      messageEl.style.display = 'none'
+      
+      const options = [...currentQuestion.options]
+      shuffle(options)
+      initPond(options)
+    }
+    
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]]
+      }
+      return array
+    }
+    
+    function nextQuestion() {
+      generateQuestion()
+    }
+    
+    function init() {
+      score = 0
+      setScore(0)
+      generateQuestion()
+    }
+    
+    nextBtn.addEventListener('click', nextQuestion)
+    resetBtn.addEventListener('click', init)
+    init()
+  </script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>10以内加减法</title>
+  <style>
+    :root{--bg:#f0f9ff;--card:#ffffff;--accent:#74b9ff;--accent2:#0984e3;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .equation{font-size:36px;font-weight:bold;color:var(--accent2);margin:20px 0;display:flex;align-items:center;gap:12px}
+    .answer-box{width:70px;height:70px;border:4px dashed var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:32px;color:var(--accent);transition:all 0.3s}
+    .answer-box.correct{border-color:var(--correct);background:#dfe6e9;color:var(--correct)}
+    .answer-box.wrong{border-color:var(--wrong)}
+    .number-pool{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:16px 0}
+    .number-chip{width:60px;height:60px;background:linear-gradient(135deg,var(--accent),#a8d8ea);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:bold;color:white;cursor:grab;transition:all 0.3s;box-shadow:0 4px 8px rgba(116,185,255,0.4)}
+    .number-chip:active{cursor:grabbing;transform:scale(1.1)}
+    .number-chip.used{opacity:0.3;cursor:not-allowed}
+    .btn{background:linear-gradient(135deg,var(--accent2),#6c5ce7);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(9,132,227,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    .progress{width:100%;height:10px;background:#dfe6e9;border-radius:5px;margin-top:12px;overflow:hidden}
+    .progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width 0.5s}
+    @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.equation{font-size:28px}.number-chip{width:50px;height:50px;font-size:22px}.answer-box{width:60px;height:60px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🧮 10以内加减法</h1>
+      <p>10以内加减法是最基础的数学运算。加法是把两个数合起来，减法是从一个数里去掉一部分。</p>
+      <p style="margin-top:8px">💡 小技巧：计算加法时可以用数手指的方法，计算减法时可以想"几加几等于被减数"。</p>
+      <div style="margin-top:16px;padding:12px;background:#dfe6e9;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        把下方的数字拖到等号后面的方框里，完成算式。答对得分，答错不扣分哦！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🎯 算术挑战</h2>
+      <div class="hint">拖拽数字到方框中完成算式</div>
+      
+      <div class="equation" id="equation">
+        <span id="num1">3</span>
+        <span id="op">+</span>
+        <span id="num2">5</span>
+        <span>=</span>
+        <div class="answer-box" id="answerBox"></div>
+      </div>
+      
+      <div class="number-pool" id="numberPool"></div>
+      
+      <div class="progress">
+        <div class="progress-bar" id="progressBar" style="width:0%"></div>
+      </div>
+      
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const num1El = document.getElementById('num1')
+    const num2El = document.getElementById('num2')
+    const opEl = document.getElementById('op')
+    const answerBox = document.getElementById('answerBox')
+    const numberPool = document.getElementById('numberPool')
+    const scoreEl = document.getElementById('scoreVal')
+    const nextBtn = document.getElementById('next')
+    const resetBtn = document.getElementById('reset')
+    const messageEl = document.getElementById('message')
+    const progressBar = document.getElementById('progressBar')
+    
+    let score = 0
+    let currentAnswer = 0
+    let currentQuestion = 0
+    const totalQuestions = 10
+    
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+    
+    function generateQuestion() {
+      const isAddition = Math.random() > 0.5
+      let num1, num2
+      
+      if (isAddition) {
+        num1 = Math.floor(Math.random() * 9) + 1
+        num2 = Math.floor(Math.random() * (10 - num1)) + 1
+      } else {
+        num1 = Math.floor(Math.random() * 9) + 2
+        num2 = Math.floor(Math.random() * num1) + 1
+      }
+      
+      num1El.textContent = num1
+      num2El.textContent = num2
+      opEl.textContent = isAddition ? '+' : '-'
+      currentAnswer = isAddition ? num1 + num2 : num1 - num2
+      
+      answerBox.textContent = ''
+      answerBox.className = 'answer-box'
+      answerBox.style.borderStyle = 'dashed'
+      messageEl.style.display = 'none'
+      
+      const numbers = []
+      for (let i = 0; i <= 10; i++) numbers.push(i)
+      shuffle(numbers)
+      
+      numberPool.innerHTML = ''
+      numbers.slice(0, 6).forEach(num => {
+        const chip = document.createElement('div')
+        chip.className = 'number-chip'
+        chip.draggable = true
+        chip.textContent = num
+        chip.id = 'chip-' + num
+        chip.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('num', num)
+          chip.style.opacity = '0.5'
+        })
+        chip.addEventListener('dragend', () => {
+          chip.style.opacity = '1'
+        })
+        numberPool.appendChild(chip)
+      })
+    }
+    
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]]
+      }
+      return array
+    }
+    
+    answerBox.addEventListener('dragover', e => e.preventDefault())
+    answerBox.addEventListener('drop', e => {
+      e.preventDefault()
+      const num = parseInt(e.dataTransfer.getData('num'))
+      
+      if (num === currentAnswer) {
+        answerBox.textContent = num
+        answerBox.classList.add('correct')
+        answerBox.style.borderStyle = 'solid'
+        setScore(score + 10)
+        messageEl.textContent = '✅ 答对了！'
+        messageEl.style.color = 'var(--correct)'
+        messageEl.style.display = 'block'
+      } else {
+        answerBox.textContent = num
+        answerBox.classList.add('wrong')
+        setTimeout(() => {
+          answerBox.textContent = ''
+          answerBox.classList.remove('wrong')
+        }, 500)
+        messageEl.textContent = '❌ 再试试！'
+        messageEl.style.color = 'var(--wrong)'
+        messageEl.style.display = 'block'
+      }
+    })
+    
+    function nextQuestion() {
+      currentQuestion++
+      if (currentQuestion >= totalQuestions) {
+        messageEl.textContent = `🎉 太棒了！你完成了所有题目！得分：${score}`
+        messageEl.style.color = '#fd79a8'
+        messageEl.style.display = 'block'
+        nextBtn.disabled = true
+        return
+      }
+      progressBar.style.width = `${(currentQuestion / totalQuestions) * 100}%`
+      generateQuestion()
+    }
+    
+    function init() {
+      score = 0
+      currentQuestion = 0
+      setScore(0)
+      nextBtn.disabled = false
+      progressBar.style.width = '0%'
+      generateQuestion()
+    }
+    
+    nextBtn.addEventListener('click', nextQuestion)
+    resetBtn.addEventListener('click', init)
+    init()
+  </script>
+</body>
+</html>

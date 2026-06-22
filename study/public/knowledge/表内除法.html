@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>表内除法</title>
+  <style>
+    :root{--bg:#fff3e0;--card:#ffffff;--accent:#ffcc80;--accent2:#ff9800;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .memory-board{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0;justify-content:center;width:100%;max-width:300px}
+    .card-item{width:60px;height:60px;perspective:1000px;cursor:pointer}
+    .card-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 0.5s}
+    .card-item.flipped .card-inner{transform:rotateY(180deg)}
+    .card-item.matched .card-inner{transform:rotateY(180deg)}
+    .card-front,.card-back{width:100%;height:100%;position:absolute;backface-visibility:hidden;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:bold}
+    .card-front{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white}
+    .card-back{background:white;border:3px solid var(--accent);color:var(--accent2);transform:rotateY(180deg)}
+    .question{font-size:24px;font-weight:bold;color:var(--accent2);margin:20px 0;text-align:center}
+    .btn{background:linear-gradient(135deg,var(--accent2),#ffb74d);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(255,152,0,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.card-item{width:50px;height:50px}.card-front,.card-back{font-size:16px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🔢 表内除法</h1>
+      <p>表内除法是指乘法口诀表中的除法（1-9的除法）。</p>
+      <p style="margin-top:8px">💡 除法是乘法的逆运算。</p>
+      <p style="margin-top:8px">🔢 例如：12 ÷ 3 = 4，表示12里面有4个3。</p>
+      <div style="margin-top:16px;padding:12px;background:#ffcc80;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        记忆配对！找出除法算式和结果的配对。
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🃏 除法记忆配对</h2>
+      <div class="hint">点击卡片翻转，找出算式和答案的配对</div>
+      
+      <div class="question" id="question">找出除法算式和结果的配对！</div>
+      
+      <div class="memory-board" id="board"></div>
+      
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const questionEl = document.getElementById('question')
+    const board = document.getElementById('board')
+    const nextBtn = document.getElementById('next')
+    const resetBtn = document.getElementById('reset')
+    const scoreEl = document.getElementById('scoreVal')
+    const messageEl = document.getElementById('message')
+    
+    let score = 0
+    let flippedCards = []
+    let matchedPairs = 0
+    let isLocked = false
+    
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+    
+    function generateQuestion() {
+      const pairs = []
+      for (let i = 0; i < 4; i++) {
+        const divisor = Math.floor(Math.random() * 8) + 2
+        const quotient = Math.floor(Math.random() * 8) + 2
+        const dividend = divisor * quotient
+        
+        pairs.push({ type: 'eq', value: dividend + '÷' + divisor })
+        pairs.push({ type: 'ans', value: quotient.toString() })
+      }
+      
+      shuffle(pairs)
+      
+      board.innerHTML = ''
+      flippedCards = []
+      matchedPairs = 0
+      isLocked = false
+      messageEl.style.display = 'none'
+      
+      pairs.forEach((pair, idx) => {
+        const card = document.createElement('div')
+        card.className = 'card-item'
+        card.dataset.index = idx
+        card.dataset.value = pair.value
+        
+        card.innerHTML = `
+          <div class="card-inner">
+            <div class="card-front">?</div>
+            <div class="card-back">${pair.value}</div>
+          </div>
+        `
+        
+        card.addEventListener('click', () => {
+          if (isLocked || card.classList.contains('flipped') || card.classList.contains('matched')) return
+          
+          card.classList.add('flipped')
+          flippedCards.push(card)
+          
+          if (flippedCards.length === 2) {
+            checkMatch()
+          }
+        })
+        
+        board.appendChild(card)
+      })
+    }
+    
+    function checkMatch() {
+      isLocked = true
+      const [card1, card2] = flippedCards
+      
+      const eqCard = card1.dataset.value.includes('÷') ? card1 : card2
+      const ansCard = card1.dataset.value.includes('÷') ? card2 : card1
+      
+      const [dividend, divisor] = eqCard.dataset.value.split('÷').map(Number)
+      const expected = dividend / divisor
+      const actual = parseInt(ansCard.dataset.value)
+      
+      if (expected === actual) {
+        eqCard.classList.add('matched')
+        ansCard.classList.add('matched')
+        matchedPairs++
+        setScore(score + 10)
+        
+        messageEl.textContent = '✅ 配对成功！'
+        messageEl.style.color = 'var(--correct)'
+        messageEl.style.display = 'block'
+        
+        if (matchedPairs === 4) {
+          setTimeout(() => {
+            messageEl.textContent = '🎉 全部配对成功！太棒了！'
+          }, 500)
+        }
+        
+        flippedCards = []
+        isLocked = false
+      } else {
+        messageEl.textContent = '❌ 不对哦，再试试！'
+        messageEl.style.color = 'var(--wrong)'
+        messageEl.style.display = 'block'
+        
+        setTimeout(() => {
+          card1.classList.remove('flipped')
+          card2.classList.remove('flipped')
+          flippedCards = []
+          isLocked = false
+        }, 1000)
+      }
+    }
+    
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        [array[i], array[j]] = [array[j], array[i]]
+      }
+      return array
+    }
+    
+    function init() {
+      score = 0
+      setScore(0)
+      generateQuestion()
+    }
+    
+    nextBtn.addEventListener('click', generateQuestion)
+    resetBtn.addEventListener('click', init)
+    init()
+  </script>
+</body>
+</html>

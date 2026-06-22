@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>100以内加减法</title>
+  <style>
+    :root{--bg:#e8f5e9;--card:#ffffff;--accent:#81c784;--accent2:#43a047;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .equation{font-size:36px;font-weight:bold;color:var(--accent2);margin:20px 0;display:flex;gap:15px;align-items:center}
+    .answer-box{width:100px;height:70px;border:3px dashed var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:32px;color:var(--accent2)}
+    .answer-box.filled{border-color:var(--correct);background:var(--correct);color:white}
+    .number-tiles{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0;justify-content:center}
+    .tile{width:65px;height:65px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:bold;color:white;cursor:grab;transition:transform 0.2s}
+    .tile:active{cursor:grabbing;transform:scale(1.1)}
+    .btn{background:linear-gradient(135deg,var(--accent2),#81c784);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(67,160,71,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.equation{font-size:28px}.answer-box{width:80px;height:55px;font-size:24px}.tile{width:55px;height:55px;font-size:24px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🔢 100以内加减法</h1>
+      <p>100以内的加减法需要注意进位和退位。</p>
+      <p style="margin-top:8px">💡 加法进位：个位满10向十位进1。</p>
+      <p style="margin-top:8px">💡 减法退位：个位不够减，从十位借1当10。</p>
+      <div style="margin-top:16px;padding:12px;background:#81c784;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        拖动数字完成算式，挑战100以内加减法！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🧮 算术挑战</h2>
+      <div class="hint">拖动数字完成算式</div>
+      
+      <div class="equation">
+        <span id="num1">45</span>
+        <span id="op">+</span>
+        <span id="num2">37</span>
+        <span>=</span>
+        <div class="answer-box" id="answer"></div>
+      </div>
+      
+      <div class="number-tiles" id="tiles"></div>
+      
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const num1El = document.getElementById('num1')
+    const num2El = document.getElementById('num2')
+    const opEl = document.getElementById('op')
+    const answerBox = document.getElementById('answer')
+    const tilesEl = document.getElementById('tiles')
+    const nextBtn = document.getElementById('next')
+    const resetBtn = document.getElementById('reset')
+    const scoreEl = document.getElementById('scoreVal')
+    const messageEl = document.getElementById('message')
+    
+    let score = 0
+    let currentAnswer = 0
+    
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+    
+    function generateQuestion() {
+      const isAddition = Math.random() > 0.5
+      let num1, num2
+      
+      if (isAddition) {
+        num1 = Math.floor(Math.random() * 90) + 10
+        num2 = Math.floor(Math.random() * (100 - num1)) + 1
+        currentAnswer = num1 + num2
+        opEl.textContent = '+'
+      } else {
+        num1 = Math.floor(Math.random() * 90) + 10
+        num2 = Math.floor(Math.random() * num1) + 1
+        currentAnswer = num1 - num2
+        opEl.textContent = '-'
+      }
+      
+      num1El.textContent = num1
+      num2El.textContent = num2
+      answerBox.textContent = ''
+      answerBox.classList.remove('filled')
+      messageEl.style.display = 'none'
+      
+      initTiles(currentAnswer)
+    }
+    
+    function initTiles(correct) {
+      tilesEl.innerHTML = ''
+      const options = [correct]
+      
+      while (options.length < 4) {
+        const rand = Math.floor(Math.random() * 100) + 1
+        if (!options.includes(rand)) options.push(rand)
+      }
+      
+      shuffle(options)
+      
+      options.forEach(num => {
+        const tile = document.createElement('div')
+        tile.className = 'tile'
+        tile.textContent = num
+        tile.draggable = true
+        
+        tile.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('num', num.toString())
+          tile.style.opacity = '0.5'
+        })
+        
+        tile.addEventListener('dragend', () => {
+          tile.style.opacity = '1'
+        })
+        
+        tilesEl.appendChild(tile)
+      })
+    }
+    
+    answerBox.addEventListener('dragover', e => e.preventDefault())
+    answerBox.addEventListener('drop', e => {
+      const num = parseInt(e.dataTransfer.getData('num'))
+      
+      if (num === currentAnswer) {
+        answerBox.textContent = num
+        answerBox.classList.add('filled')
+        messageEl.textContent = '✅ 正确！太棒了！'
+        messageEl.style.color = 'var(--correct)'
+        messageEl.style.display = 'block'
+        setScore(score + 10)
+        
+        setTimeout(() => {
+          generateQuestion()
+        }, 1000)
+      } else {
+        answerBox.textContent = num
+        answerBox.style.borderColor = 'var(--wrong)'
+        messageEl.textContent = '❌ 不对哦，再试试！'
+        messageEl.style.color = 'var(--wrong)'
+        messageEl.style.display = 'block'
+        
+        setTimeout(() => {
+          answerBox.textContent = ''
+          answerBox.style.borderColor = 'var(--accent)'
+          messageEl.style.display = 'none'
+        }, 1000)
+      }
+    })
+    
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        [array[i], array[j]] = [array[j], array[i]]
+      }
+      return array
+    }
+    
+    function init() {
+      score = 0
+      setScore(0)
+      generateQuestion()
+    }
+    
+    nextBtn.addEventListener('click', generateQuestion)
+    resetBtn.addEventListener('click', init)
+    init()
+  </script>
+</body>
+</html>

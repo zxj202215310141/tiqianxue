@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>百分数的运算</title>
+  <style>
+    :root{--bg:#f3e5f5;--card:#ffffff;--accent:#ce93d8;--accent2:#7b1fa2;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .equation{font-size:28px;font-weight:bold;color:var(--accent2);margin:20px 0;display:flex;gap:15px;align-items:center}
+    .answer-box{width:100px;height:60px;border:3px dashed var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--accent2)}
+    .answer-box.filled{border-color:var(--correct);background:var(--correct);color:white}
+    .number-tiles{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0;justify-content:center}
+    .tile{width:70px;height:60px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:bold;color:white;cursor:grab;transition:transform 0.2s}
+    .tile:active{cursor:grabbing;transform:scale(1.1)}
+    .btn{background:linear-gradient(135deg,var(--accent2),#ab47bc);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(123,31,162,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.equation{font-size:20px}.answer-box{width:80px;height:50px;font-size:18px}.tile{width:60px;height:50px;font-size:16px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🔢 百分数的运算</h1>
+      <p>百分数表示一个数是另一个数的百分之几。</p>
+      <p style="margin-top:8px">💡 百分数可以转化为小数或分数进行计算。</p>
+      <p style="margin-top:8px">🔢 例如：20% × 50 = 10，50% + 30% = 80%</p>
+      <div style="margin-top:16px;padding:12px;background:#ce93d8;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        拖动数字或百分数完成算式！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🧩 百分数运算挑战</h2>
+      <div class="hint">拖动答案完成算式</div>
+      
+      <div class="equation">
+        <span id="num1">50</span>
+        <span id="op">×</span>
+        <span id="num2">20%</span>
+        <span>=</span>
+        <div class="answer-box" id="answer"></div>
+      </div>
+      
+      <div class="number-tiles" id="tiles"></div>
+      
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const num1El = document.getElementById('num1')
+    const num2El = document.getElementById('num2')
+    const opEl = document.getElementById('op')
+    const answerBox = document.getElementById('answer')
+    const tilesEl = document.getElementById('tiles')
+    const nextBtn = document.getElementById('next')
+    const resetBtn = document.getElementById('reset')
+    const scoreEl = document.getElementById('scoreVal')
+    const messageEl = document.getElementById('message')
+    
+    let score = 0
+    let currentAnswer = ''
+    
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+    
+    function generateQuestion() {
+      const types = ['percent_num', 'percent_percent', 'num_percent']
+      const type = types[Math.floor(Math.random() * types.length)]
+      
+      let num1, num2, op, result
+      
+      if (type === 'percent_num') {
+        num1 = Math.floor(Math.random() * 9) + 1
+        num2 = Math.floor(Math.random() * 90) + 10
+        op = '×'
+        result = num1 * num2
+        num1El.textContent = num1 + '%'
+        num2El.textContent = num2
+        currentAnswer = result.toString()
+      } else if (type === 'percent_percent') {
+        num1 = Math.floor(Math.random() * 40) + 10
+        num2 = Math.floor(Math.random() * 40) + 10
+        op = Math.random() > 0.5 ? '+' : '-'
+        if (op === '+') {
+          result = num1 + num2
+        } else {
+          result = Math.max(0, num1 - num2)
+        }
+        num1El.textContent = num1 + '%'
+        num2El.textContent = num2 + '%'
+        currentAnswer = result + '%'
+      } else {
+        num1 = Math.floor(Math.random() * 90) + 10
+        num2 = Math.floor(Math.random() * 9) + 1
+        op = '×'
+        result = num1 * num2
+        num1El.textContent = num1
+        num2El.textContent = num2 + '%'
+        currentAnswer = result.toString()
+      }
+      
+      opEl.textContent = op
+      answerBox.textContent = ''
+      answerBox.classList.remove('filled')
+      messageEl.style.display = 'none'
+      
+      initTiles(currentAnswer)
+    }
+    
+    function initTiles(correct) {
+      tilesEl.innerHTML = ''
+      const options = [correct]
+      
+      while (options.length < 4) {
+        let rand
+        if (correct.includes('%')) {
+          rand = Math.floor(Math.random() * 90) + 10 + '%'
+        } else {
+          rand = Math.floor(Math.random() * 500) + 10
+        }
+        
+        if (!options.includes(rand)) options.push(rand)
+      }
+      
+      shuffle(options)
+      
+      options.forEach(opt => {
+        const tile = document.createElement('div')
+        tile.className = 'tile'
+        tile.textContent = opt
+        tile.draggable = true
+        
+        tile.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('val', opt)
+          tile.style.opacity = '0.5'
+        })
+        
+        tile.addEventListener('dragend', () => {
+          tile.style.opacity = '1'
+        })
+        
+        tilesEl.appendChild(tile)
+      })
+    }
+    
+    answerBox.addEventListener('dragover', e => e.preventDefault())
+    answerBox.addEventListener('drop', e => {
+      const val = e.dataTransfer.getData('val')
+      
+      if (val === currentAnswer) {
+        answerBox.textContent = val
+        answerBox.classList.add('filled')
+        messageEl.textContent = '✅ 正确！太棒了！'
+        messageEl.style.color = 'var(--correct)'
+        messageEl.style.display = 'block'
+        setScore(score + 10)
+        
+        setTimeout(() => {
+          generateQuestion()
+        }, 1000)
+      } else {
+        answerBox.textContent = val
+        answerBox.style.borderColor = 'var(--wrong)'
+        messageEl.textContent = '❌ 不对哦，再试试！'
+        messageEl.style.color = 'var(--wrong)'
+        messageEl.style.display = 'block'
+        
+        setTimeout(() => {
+          answerBox.textContent = ''
+          answerBox.style.borderColor = 'var(--accent)'
+          messageEl.style.display = 'none'
+        }, 1000)
+      }
+    })
+    
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        [array[i], array[j]] = [array[j], array[i]]
+      }
+      return array
+    }
+    
+    function init() {
+      score = 0
+      setScore(0)
+      generateQuestion()
+    }
+    
+    nextBtn.addEventListener('click', generateQuestion)
+    resetBtn.addEventListener('click', init)
+    init()
+  </script>
+</body>
+</html>

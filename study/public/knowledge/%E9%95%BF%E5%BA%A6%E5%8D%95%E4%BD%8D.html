@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>长度单位</title>
+  <style>
+    :root{--bg:#f7fff9;--card:#ffffff;--accent:#cfeee0;--text:#0b5b45}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 6px 16px rgba(0,0,0,0.06)}
+    h1{margin:0 0 8px 0}
+    .knowledge{min-height:240px}
+    .game{min-height:360px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .items{display:flex;flex-wrap:wrap;gap:8px;padding:8px}
+    .item{background:var(--accent);padding:8px 12px;border-radius:10px;cursor:grab}
+    .target{min-height:40px;border:2px dashed #e0e0e0;border-radius:10px;padding:8px;min-width:120px;display:flex;align-items:center;justify-content:center}
+    .row{display:flex;gap:8px;margin-top:8px}
+    .btn{background:#0b5b45;color:white;padding:8px 12px;border-radius:10px;border:none}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr;}}
+  </style>
+  </head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>长度单位</h1>
+      <p>这是关于《长度单位》的简单讲解：用小学生能听懂的语言来说明核心概念。</p>
+      <div style="margin-top:12px">互动说明：将右侧的物品拖拽到正确位置，完成小任务以巩固知识。</div>
+    </div>
+
+    <div class="card game" data-game="drag">
+      <h2 style="margin:0 0 8px 0">小游戏</h2>
+      <div id="gameArea"></div>
+      <div class="row" style="margin-top:12px">
+        <button id="reset" class="btn">重置</button>
+        <div id="score" style="margin-left:8px;align-self:center">得分：0</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const gameArea = document.getElementById('gameArea')
+    const scoreEl = document.getElementById('score')
+    const resetBtn = document.getElementById('reset')
+    let score=0
+    function setScore(v){score=v;scoreEl.textContent='得分：'+score}
+    resetBtn.addEventListener('click',()=>init())
+
+    function init(){
+      const container = document.querySelector('.game').dataset.game || 'drag'
+      gameArea.innerHTML=''
+      setScore(0)
+      if(container==='drag') renderDrag()
+      else if(container==='puzzle') renderPuzzle()
+      else if(container==='match') renderMatch()
+      else renderDrag()
+    }
+
+    function renderDrag(){
+      const items = ['1','2','3','4']
+      const targets = ['A','B','C','D']
+      const it = document.createElement('div'); it.className='items'
+      items.forEach(t=>{const d=document.createElement('div');d.className='item';d.draggable=true;d.textContent=t;d.id='it-'+t;d.addEventListener('dragstart',e=>e.dataTransfer.setData('text',t));it.appendChild(d)})
+      const tarWrap=document.createElement('div');tarWrap.style.display='grid';tarWrap.style.gridTemplateColumns='repeat(2,1fr)';tarWrap.style.gap='8px';tarWrap.style.marginTop='12px'
+      targets.forEach(t=>{const d=document.createElement('div');d.className='target';d.dataset.want=t;d.textContent='目标 '+t;d.addEventListener('dragover',e=>e.preventDefault());d.addEventListener('drop',e=>{const val=e.dataTransfer.getData('text'); if(val===t){d.textContent='✅ '+t;d.style.border='2px solid #0b5b45'; setScore(score+1)} else {d.textContent='❌ '+val; d.style.border='2px solid #d9534f'}});tarWrap.appendChild(d)})
+      gameArea.appendChild(it);gameArea.appendChild(tarWrap)
+    }
+
+    function renderMatch(){
+      const pairs=[['苹果','A'],['香蕉','B'],['橙子','C']]
+      const left=document.createElement('div');left.className='items'
+      pairs.forEach(p=>{const d=document.createElement('div');d.className='item';d.textContent=p[0];d.draggable=true;d.id='l-'+p[1];d.addEventListener('dragstart',e=>e.dataTransfer.setData('text',p[1]));left.appendChild(d)})
+      const right=document.createElement('div');right.style.display='grid';right.style.gridTemplateColumns='1fr';right.style.gap='8px';
+      ['A','B','C'].forEach(code=>{const t=document.createElement('div');t.className='target';t.dataset.want=code;t.textContent='放到这里';t.addEventListener('dragover',e=>e.preventDefault());t.addEventListener('drop',e=>{const v=e.dataTransfer.getData('text'); if(v===code){t.textContent='正确';t.style.border='2px solid #0b5b45'; setScore(score+1)} else {t.textContent='错误';t.style.border='2px solid #d9534f'}});right.appendChild(t)})
+      gameArea.appendChild(left);gameArea.appendChild(right)
+    }
+
+    function renderPuzzle(){
+      const wrap=document.createElement('div');wrap.style.display='grid';wrap.style.gridTemplateColumns='repeat(3,1fr)';wrap.style.gap='6px';
+      for(let i=1;i<=9;i++){const d=document.createElement('div');d.className='item';d.textContent=i;d.addEventListener('click',()=>{alert('拼图点击：'+i)});wrap.appendChild(d)}
+      gameArea.appendChild(wrap)
+    }
+
+    init()
+  </script>
+</body>
+</html>

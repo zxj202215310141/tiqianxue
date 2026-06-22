@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>四则混合运算</title>
+  <style>
+    :root{--bg:#fff8e1;--card:#ffffff;--accent:#ffe082;--accent2:#ff8f00;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .equation{font-size:28px;font-weight:bold;color:var(--accent2);margin:20px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
+    .empty-box{width:60px;height:55px;border:3px dashed var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--accent2)}
+    .empty-box.filled{border-color:var(--correct);background:var(--correct);color:white}
+    .empty-box.op-failed{border-color:var(--wrong)}
+    .number-tiles{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0;justify-content:center}
+    .tile{width:55px;height:55px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:bold;color:white;cursor:grab;transition:transform 0.2s}
+    .tile.op{background:linear-gradient(135deg,#ffab91,#ff5722)}
+    .tile:active{cursor:grabbing;transform:scale(1.1)}
+    .btn{background:linear-gradient(135deg,var(--accent2),#ffb74d);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(255,143,0,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.equation{font-size:20px}.empty-box{width:50px;height:45px;font-size:18px}.tile{width:50px;height:50px;font-size:18px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🔢 四则混合运算</h1>
+      <p>四则混合运算要遵循运算顺序：先乘除后加减，有括号先算括号里的。</p>
+      <p style="margin-top:8px">💡 可以用"先乘除，后加减，有括号的先算括号"来记忆。</p>
+      <p style="margin-top:8px">🔢 例如：(12 + 8) × 3 - 15 = 45</p>
+      <div style="margin-top:16px;padding:12px;background:#ffe082;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        拖动数字和运算符完成混合算式！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🧩 算式组装</h2>
+      <div class="hint">拖动数字和运算符完成算式</div>
+      
+      <div class="equation" id="equation">
+        <span>(</span>
+        <span id="n1">12</span>
+        <div class="empty-box" id="op1"></div>
+        <span id="n2">8</span>
+        <span>)</span>
+        <div class="empty-box" id="op2"></div>
+        <span id="n3">3</span>
+        <div class="empty-box" id="op3"></div>
+        <span id="n4">15</span>
+        <span>=</span>
+        <div class="empty-box" id="answer"></div>
+      </div>
+      
+      <div class="number-tiles" id="tiles"></div>
+      
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const n1El = document.getElementById('n1')
+    const n2El = document.getElementById('n2')
+    const n3El = document.getElementById('n3')
+    const n4El = document.getElementById('n4')
+    const op1Box = document.getElementById('op1')
+    const op2Box = document.getElementById('op2')
+    const op3Box = document.getElementById('op3')
+    const answerBox = document.getElementById('answer')
+    const tilesEl = document.getElementById('tiles')
+    const nextBtn = document.getElementById('next')
+    const resetBtn = document.getElementById('reset')
+    const scoreEl = document.getElementById('scoreVal')
+    const messageEl = document.getElementById('message')
+    
+    let score = 0
+    let currentOps = []
+    let currentAnswer = 0
+    
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+    
+    function generateQuestion() {
+      const num1 = Math.floor(Math.random() * 15) + 5
+      const num2 = Math.floor(Math.random() * 10) + 2
+      const num3 = Math.floor(Math.random() * 5) + 2
+      const num4 = Math.floor(Math.random() * 20) + 5
+      
+      const ops = ['+', '-', '×', '÷']
+      const op1 = ops[Math.floor(Math.random() * 2)]
+      const op2 = ops[Math.floor(Math.random() * 2) + 2]
+      const op3 = ops[Math.floor(Math.random() * 2)]
+      
+      currentOps = [op1, op2, op3]
+      
+      let result
+      if (op1 === '+') {
+        result = (num1 + num2)
+      } else {
+        result = (num1 - num2)
+      }
+      
+      if (op2 === '×') {
+        result = result * num3
+      } else {
+        result = Math.floor(result / num3)
+      }
+      
+      if (op3 === '+') {
+        result = result + num4
+      } else {
+        result = result - num4
+      }
+      
+      currentAnswer = result
+      
+      n1El.textContent = num1
+      n2El.textContent = num2
+      n3El.textContent = num3
+      n4El.textContent = num4
+      
+      [op1Box, op2Box, op3Box, answerBox].forEach(b => { b.textContent = ''; b.classList.remove('filled'); b.classList.remove('op-failed') })
+      messageEl.style.display = 'none'
+      
+      initTiles()
+    }
+    
+    function initTiles() {
+      tilesEl.innerHTML = ''
+      const options = [...currentOps, currentAnswer]
+      const wrongOps = ['+', '-', '×', '÷'].filter(o => !currentOps.includes(o))
+      
+      while (options.length < 8) {
+        const rand = Math.floor(Math.random() * 100) + 1
+        if (!options.includes(rand)) options.push(rand)
+      }
+      
+      options.push(...wrongOps.slice(0, 2))
+      shuffle(options)
+      
+      options.forEach(item => {
+        const tile = document.createElement('div')
+        tile.className = 'tile' + (['+', '-', '×', '÷'].includes(item) ? ' op' : '')
+        tile.textContent = item
+        tile.draggable = true
+        
+        tile.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('item', item.toString())
+          tile.style.opacity = '0.5'
+        })
+        
+        tile.addEventListener('dragend', () => {
+          tile.style.opacity = '1'
+        })
+        
+        tilesEl.appendChild(tile)
+      })
+    }
+    
+    function checkComplete() {
+      const allFilled = [op1Box, op2Box, op3Box, answerBox].every(b => b.classList.contains('filled'))
+      
+      if (allFilled) {
+        messageEl.textContent = '✅ 正确！太棒了！'
+        messageEl.style.color = 'var(--correct)'
+        messageEl.style.display = 'block'
+        setScore(score + 10)
+        
+        setTimeout(() => {
+          generateQuestion()
+        }, 1000)
+      }
+    }
+    
+    function handleDrop(e, box, expected, isOp = false) {
+      const item = e.dataTransfer.getData('item')
+      
+      if (box.textContent !== '') return
+      
+      if (item === expected.toString()) {
+        box.textContent = item
+        box.classList.add('filled')
+        checkComplete()
+      } else {
+        box.textContent = item
+        box.classList.add('op-failed')
+        messageEl.textContent = '❌ 不对哦，再试试！'
+        messageEl.style.color = 'var(--wrong)'
+        messageEl.style.display = 'block'
+        
+        setTimeout(() => {
+          generateQuestion()
+        }, 1000)
+      }
+    }
+    
+    op1Box.addEventListener('dragover', e => e.preventDefault())
+    op1Box.addEventListener('drop', e => handleDrop(e, op1Box, currentOps[0], true))
+    
+    op2Box.addEventListener('dragover', e => e.preventDefault())
+    op2Box.addEventListener('drop', e => handleDrop(e, op2Box, currentOps[1], true))
+    
+    op3Box.addEventListener('dragover', e => e.preventDefault())
+    op3Box.addEventListener('drop', e => handleDrop(e, op3Box, currentOps[2], true))
+    
+    answerBox.addEventListener('dragover', e => e.preventDefault())
+    answerBox.addEventListener('drop', e => handleDrop(e, answerBox, currentAnswer))
+    
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        [array[i], array[j]] = [array[j], array[i]]
+      }
+      return array
+    }
+    
+    function init() {
+      score = 0
+      setScore(0)
+      generateQuestion()
+    }
+    
+    nextBtn.addEventListener('click', generateQuestion)
+    resetBtn.addEventListener('click', init)
+    init()
+  </script>
+</body>
+</html>
