@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>小数加减法</title>
   <style>
-    :root{--bg:#e0f2f1;--card:#ffffff;--accent:#80cbc4;--accent2:#00897b;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    :root{--bg:#e8f5e9;--card:#ffffff;--accent:#81c784;--accent2:#43a047;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
     *{box-sizing:border-box}
     body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
     .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -14,179 +14,79 @@
     h2{margin:0 0 12px 0;color:var(--accent2)}
     .knowledge{min-height:260px}
     .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
-    .equation{font-size:28px;font-weight:bold;color:var(--accent2);margin:20px 0;display:flex;gap:15px;align-items:center}
-    .answer-box{width:90px;height:60px;border:3px dashed var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--accent2)}
-    .answer-box.filled{border-color:var(--correct);background:var(--correct);color:white}
-    .number-tiles{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0;justify-content:center}
-    .tile{width:55px;height:55px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:bold;color:white;cursor:grab;transition:transform 0.2s}
-    .tile:active{cursor:grabbing;transform:scale(1.1)}
-    .btn{background:linear-gradient(135deg,var(--accent2),#26a69a);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(0,137,123,0.4)}
+    .equation{font-size:36px;font-weight:bold;color:var(--accent2);margin:20px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center}
+    .answer-box{width:100px;height:70px;border:3px dashed var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:32px;color:var(--accent2);background:var(--card);min-width:80px}
+    .answer-box.correct{border-color:var(--correct);background:var(--correct);color:white}
+    .answer-box.wrong{border-color:var(--wrong);background:var(--wrong);color:white}
+    .number-tiles{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0;justify-content:center}
+    .tile{width:65px;height:65px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:bold;color:white;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 8px rgba(0,0,0,0.15);border:none}
+    .tile:hover{transform:translateY(-3px);box-shadow:0 8px 16px rgba(0,0,0,0.25)}
+    .tile:active{transform:scale(0.95)}
+    .tile.selected{outline:3px solid white;outline-offset:2px}
+    .btn{background:linear-gradient(135deg,var(--accent2),var(--accent));color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(0,0,0,0.15)}
     .btn:active{transform:scale(0.95)}
-    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .row{display:flex;gap:12px;margin-top:12px;align-items:center}
     .score{font-size:18px;font-weight:bold;color:var(--accent2)}
     .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
-    @media(max-width:900px){.wrap{grid-template-columns:1fr}.equation{font-size:22px}.answer-box{width:70px;height:50px;font-size:18px}.tile{width:50px;height:50px;font-size:18px}}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.equation{font-size:28px}.tile{width:55px;height:55px;font-size:24px}.answer-box{width:80px;height:60px;font-size:24px}}
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card knowledge">
       <h1>🔢 小数加减法</h1>
-      <p>小数加减法要对齐小数点，相同数位对齐后再进行加减运算。</p>
-      <p style="margin-top:8px">💡 小数点对齐是关键，位数不够用0补齐。</p>
-      <p style="margin-top:8px">🔢 例如：3.45 + 2.1 = 5.55</p>
-      <div style="margin-top:16px;padding:12px;background:#80cbc4;border-radius:10px">
-        <strong>🎮 游戏说明：</strong><br>
-        拖动数字完成小数加减法算式！
-      </div>
+      <p>小数加减法要注意小数点对齐。</p><p style="margin-top:8px">💡 小数点对齐后，按照整数加减法的方法计算，最后在结果中点上小数点。</p><div style="margin-top:16px;padding:12px;background:#dfe6e9;border-radius:10px"><strong>🎮 游戏说明：</strong><br>点击下方数字来选择正确答案，答对得分！</div>
     </div>
-
     <div class="card game">
-      <h2>🧮 小数算术</h2>
-      <div class="hint">拖动数字完成小数算式</div>
-      
+      <h2>🎯 答题挑战</h2>
+      <div class="hint">点击下方数字来选择答案</div>
       <div class="equation">
-        <span id="num1">3.45</span>
+        <span id="num1">0</span>
         <span id="op">+</span>
-        <span id="num2">2.1</span>
+        <span id="num2">0</span>
         <span>=</span>
-        <div class="answer-box" id="answer"></div>
+        <div class="answer-box" id="answerBox">?</div>
       </div>
-      
       <div class="number-tiles" id="tiles"></div>
-      
       <div class="row">
         <button id="next" class="btn">➡️ 下一题</button>
-        <button id="reset" class="btn">🔄 重置</button>
         <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
       </div>
-      
-      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+      <div id="msg" style="margin-top:12px;font-weight:bold;font-size:20px;display:none"></div>
     </div>
   </div>
-
   <script>
-    const num1El = document.getElementById('num1')
-    const num2El = document.getElementById('num2')
-    const opEl = document.getElementById('op')
-    const answerBox = document.getElementById('answer')
-    const tilesEl = document.getElementById('tiles')
-    const nextBtn = document.getElementById('next')
-    const resetBtn = document.getElementById('reset')
-    const scoreEl = document.getElementById('scoreVal')
-    const messageEl = document.getElementById('message')
+    const num1El=document.getElementById('num1'),num2El=document.getElementById('num2'),opEl=document.getElementById('op'),
+      answerBox=document.getElementById('answerBox'),tilesEl=document.getElementById('tiles'),
+      scoreEl=document.getElementById('scoreVal'),msgEl=document.getElementById('msg');
+    let score=0,currentAnswer=null,locked=false;
+
+    function setScore(v){score=v;scoreEl.textContent=score}
+    const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
     
-    let score = 0
-    let currentAnswer = 0
+    function gen(){locked=false;const add=Math.random()>.5;const a=parseFloat((Math.random()*90+10).toFixed(1));let b;if(add){b=parseFloat((Math.random()*90+1).toFixed(1))}else{b=parseFloat((Math.random()*a).toFixed(1))}num1El.textContent=a;num2El.textContent=b;opEl.textContent=add?'+':'-';currentAnswer=parseFloat((add?a+b:a-b).toFixed(1));answerBox.textContent='?';answerBox.className='answer-box';msgEl.style.display='none';const pool=[currentAnswer];while(pool.length<6){const r=parseFloat((Math.random()*200).toFixed(1));if(!pool.includes(r))pool.push(r)}const tiles=shuffle(pool);tilesEl.innerHTML='';tiles.forEach(n=>{const t=document.createElement('button');t.className='tile';t.textContent=n;t.onclick=()=>select(n,t);tilesEl.appendChild(t)})}
     
-    function setScore(v) {
-      score = v
-      scoreEl.textContent = score
-    }
-    
-    function generateQuestion() {
-      const isAddition = Math.random() > 0.5
-      let num1, num2
-      
-      if (isAddition) {
-        num1 = (Math.floor(Math.random() * 900) + 100) / 100
-        num2 = (Math.floor(Math.random() * 900) + 100) / 100
-        currentAnswer = num1 + num2
-        opEl.textContent = '+'
-      } else {
-        num1 = (Math.floor(Math.random() * 800) + 200) / 100
-        num2 = (Math.floor(Math.random() * (num1 * 100 - 100)) + 100) / 100
-        currentAnswer = num1 - num2
-        opEl.textContent = '-'
+    function select(num,tile){
+      if(locked)return;
+      answerBox.textContent=num;
+      document.querySelectorAll('.tile').forEach(t=>t.classList.remove('selected'));
+      tile.classList.add('selected');
+      if(String(num)===String(currentAnswer)){
+        answerBox.className='answer-box correct';
+        msgEl.textContent='✅ 正确！太棒了！';
+        msgEl.style.color='var(--correct)';msgEl.style.display='block';
+        locked=true;setScore(score+10);
+        setTimeout(gen,1200);
+      }else{
+        answerBox.className='answer-box wrong';
+        msgEl.textContent='❌ 不对哦，再试试！';
+        msgEl.style.color='var(--wrong)';msgEl.style.display='block';
+        setTimeout(()=>{answerBox.textContent='?';answerBox.className='answer-box';msgEl.style.display='none'},800);
       }
-      
-      num1El.textContent = num1
-      num2El.textContent = num2
-      answerBox.textContent = ''
-      answerBox.classList.remove('filled')
-      messageEl.style.display = 'none'
-      
-      initTiles(currentAnswer)
     }
-    
-    function initTiles(correct) {
-      tilesEl.innerHTML = ''
-      const options = [correct.toFixed(2)]
-      
-      while (options.length < 4) {
-        const rand = (Math.floor(Math.random() * 1900) + 100) / 100
-        const randStr = rand.toFixed(2)
-        if (!options.includes(randStr)) options.push(randStr)
-      }
-      
-      shuffle(options)
-      
-      options.forEach(num => {
-        const tile = document.createElement('div')
-        tile.className = 'tile'
-        tile.textContent = num
-        tile.draggable = true
-        
-        tile.addEventListener('dragstart', e => {
-          e.dataTransfer.setData('num', num)
-          tile.style.opacity = '0.5'
-        })
-        
-        tile.addEventListener('dragend', () => {
-          tile.style.opacity = '1'
-        })
-        
-        tilesEl.appendChild(tile)
-      })
-    }
-    
-    answerBox.addEventListener('dragover', e => e.preventDefault())
-    answerBox.addEventListener('drop', e => {
-      const num = parseFloat(e.dataTransfer.getData('num'))
-      
-      if (Math.abs(num - currentAnswer) < 0.01) {
-        answerBox.textContent = currentAnswer.toFixed(2)
-        answerBox.classList.add('filled')
-        messageEl.textContent = '✅ 正确！太棒了！'
-        messageEl.style.color = 'var(--correct)'
-        messageEl.style.display = 'block'
-        setScore(score + 10)
-        
-        setTimeout(() => {
-          generateQuestion()
-        }, 1000)
-      } else {
-        answerBox.textContent = num.toFixed(2)
-        answerBox.style.borderColor = 'var(--wrong)'
-        messageEl.textContent = '❌ 不对哦，再试试！'
-        messageEl.style.color = 'var(--wrong)'
-        messageEl.style.display = 'block'
-        
-        setTimeout(() => {
-          answerBox.textContent = ''
-          answerBox.style.borderColor = 'var(--accent)'
-          messageEl.style.display = 'none'
-        }, 1000)
-      }
-    })
-    
-    function shuffle(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1))
-        [array[i], array[j]] = [array[j], array[i]]
-      }
-      return array
-    }
-    
-    function init() {
-      score = 0
-      setScore(0)
-      generateQuestion()
-    }
-    
-    nextBtn.addEventListener('click', generateQuestion)
-    resetBtn.addEventListener('click', init)
-    init()
+    function init(){score=0;setScore(0);gen()}
+    document.getElementById('next').onclick=gen;
+    init();
   </script>
 </body>
 </html>
