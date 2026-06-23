@@ -114,7 +114,7 @@
         nums.push(start + i)
       }
       
-      nums.sort((a, b) => a - b)
+      shuffle(nums)
       
       nums.forEach(num => {
         const piece = document.createElement('div')

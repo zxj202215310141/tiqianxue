@@ -91,12 +91,13 @@
     let score = 0
     let cart = []
     let paidMoney = []
-    
+    let usedBills = new Set()
+
     function setScore(v) {
       score = v
       scoreEl.textContent = score
     }
-    
+
     function updateCart() {
       if (cart.length === 0) {
         cartItems.innerHTML = '还没有商品哦~'
@@ -105,10 +106,17 @@
         cartItems.innerHTML = cart.map(item => `<div class="cart-item">${item.icon} ${item.name}</div>`).join('')
         totalEl.textContent = cart.reduce((sum, item) => sum + item.price, 0)
       }
+      // Show paid amount
+      const paid = paidMoney.reduce((sum, m) => sum + m, 0)
+      const paidDisplay = document.getElementById('paidDisplay')
+      if (paidDisplay) {
+        paidDisplay.textContent = paid > 0 ? `已付：${paid}元` : ''
+      }
     }
-    
+
     function initMoney() {
       moneyPool.innerHTML = ''
+      usedBills = new Set()
       const bills = [1, 2, 5, 10]
       bills.forEach(amount => {
         const bill = document.createElement('div')
@@ -116,8 +124,14 @@
         bill.draggable = true
         bill.textContent = amount + '元'
         bill.dataset.amount = amount
+        bill.id = 'bill-' + amount + '-' + Date.now()
         bill.addEventListener('dragstart', e => {
+          if (usedBills.has(bill.id)) {
+            e.preventDefault()
+            return
+          }
           e.dataTransfer.setData('amount', amount)
+          e.dataTransfer.setData('billId', bill.id)
           bill.style.opacity = '0.5'
         })
         bill.addEventListener('dragend', () => {
@@ -151,8 +165,17 @@
     cartItems.addEventListener('drop', e => {
       e.preventDefault()
       const amount = parseInt(e.dataTransfer.getData('amount'))
-      if (!isNaN(amount)) {
+      const billId = e.dataTransfer.getData('billId')
+      if (!isNaN(amount) && !usedBills.has(billId)) {
+        usedBills.add(billId)
         paidMoney.push(amount)
+        // Mark the bill as used
+        const billEl = document.getElementById(billId)
+        if (billEl) {
+          billEl.style.opacity = '0.3'
+          billEl.style.cursor = 'not-allowed'
+          billEl.draggable = false
+        }
         updateCart()
       }
     })
@@ -176,6 +199,7 @@
         setTimeout(() => {
           cart = []
           paidMoney = []
+          initMoney()
           updateCart()
           messageEl.style.display = 'none'
         }, 1500)
@@ -188,6 +212,7 @@
         setTimeout(() => {
           cart = []
           paidMoney = []
+          initMoney()
           updateCart()
           messageEl.style.display = 'none'
         }, 1500)
@@ -197,14 +222,15 @@
         messageEl.style.display = 'block'
       }
     })
-    
+
     clearBtn.addEventListener('click', () => {
       cart = []
       paidMoney = []
+      initMoney()
       updateCart()
       messageEl.style.display = 'none'
     })
-    
+
     function init() {
       score = 0
       setScore(0)

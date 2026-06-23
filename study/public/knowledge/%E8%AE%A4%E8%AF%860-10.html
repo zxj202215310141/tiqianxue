@@ -96,7 +96,7 @@
         const slot = document.createElement('div')
         slot.className = 'target-slot'
         slot.dataset.num = i
-        slot.textContent = i
+        slot.textContent = '?'
         slot.addEventListener('dragover', e => e.preventDefault())
         slot.addEventListener('drop', handleDrop)
         targetsEl.appendChild(slot)
@@ -134,11 +134,12 @@
         piece.style.opacity = '0'
         
         e.target.classList.add('filled')
+        e.target.textContent = num
         e.target.style.background = 'linear-gradient(135deg,#00b894,#55efc4)'
         e.target.style.color = 'white'
         
         placed[num] = true
-        setScore(score + 10)
+        setScore(Math.min(100, score + 10))
         
         if (Object.keys(placed).length === 11) {
           setTimeout(() => {

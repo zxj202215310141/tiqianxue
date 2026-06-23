@@ -103,20 +103,13 @@
     }
     
     function drawPizza(numerator, denominator) {
-      pizza.innerHTML = ''
-      
-      for (let i = 0; i < denominator; i++) {
-        const slice = document.createElement('div')
-        slice.className = 'pizza-slice'
-        slice.style.transform = `rotate(${i * (360 / denominator)}deg)`
-        
-        const topping = document.createElement('div')
-        topping.className = 'pizza-topping'
-        topping.style.opacity = i < numerator ? '0' : '1'
-        
-        slice.appendChild(topping)
-        pizza.appendChild(slice)
-      }
+      // Use conic-gradient to draw a proper fraction pizza
+      const eatenDeg = (numerator / denominator) * 360
+      pizza.style.background = `conic-gradient(#e17055 0deg ${eatenDeg}deg, #ffeaa7 ${eatenDeg}deg 360deg)`
+      pizza.style.borderRadius = '50%'
+      pizza.style.border = '3px solid #fdcb6e'
+      pizza.style.width = '100%'
+      pizza.style.height = '100%'
     }
     
     function generateQuestion() {

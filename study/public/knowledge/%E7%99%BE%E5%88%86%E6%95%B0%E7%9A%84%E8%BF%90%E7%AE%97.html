@@ -91,13 +91,19 @@
       let num1, num2, op, result
       
       if (type === 'percent_num') {
-        num1 = Math.floor(Math.random() * 9) + 1
-        num2 = Math.floor(Math.random() * 90) + 10
+        // X% × Y = (X/100) * Y, result should be decimal
+        num1 = Math.floor(Math.random() * 9) + 1  // 1-9
+        num2 = Math.floor(Math.random() * 90) + 10  // 10-99
         op = '×'
-        result = num1 * num2
+        result = (num1 / 100) * num2
         num1El.textContent = num1 + '%'
         num2El.textContent = num2
-        currentAnswer = result.toString()
+        // Format result: if it's a whole number, no decimals; otherwise 2 decimal places
+        if (Number.isInteger(result)) {
+          currentAnswer = result.toString()
+        } else {
+          currentAnswer = parseFloat(result.toFixed(2)).toString()
+        }
       } else if (type === 'percent_percent') {
         num1 = Math.floor(Math.random() * 40) + 10
         num2 = Math.floor(Math.random() * 40) + 10
@@ -111,13 +117,18 @@
         num2El.textContent = num2 + '%'
         currentAnswer = result + '%'
       } else {
+        // Y × X% = Y * (X/100), result should be decimal
         num1 = Math.floor(Math.random() * 90) + 10
         num2 = Math.floor(Math.random() * 9) + 1
         op = '×'
-        result = num1 * num2
+        result = (num2 / 100) * num1
         num1El.textContent = num1
         num2El.textContent = num2 + '%'
-        currentAnswer = result.toString()
+        if (Number.isInteger(result)) {
+          currentAnswer = result.toString()
+        } else {
+          currentAnswer = parseFloat(result.toFixed(2)).toString()
+        }
       }
       
       opEl.textContent = op
@@ -136,11 +147,17 @@
         let rand
         if (correct.includes('%')) {
           rand = Math.floor(Math.random() * 90) + 10 + '%'
+        } else if (correct.includes('.')) {
+          rand = parseFloat((Math.random() * 50 + 0.5).toFixed(2))
+          if (Number.isInteger(rand)) rand = rand + '.0'
+          rand = rand.toString()
         } else {
           rand = Math.floor(Math.random() * 500) + 10
+          rand = rand.toString()
         }
-        
-        if (!options.includes(rand)) options.push(rand)
+
+        const randStr = rand.toString()
+        if (!options.includes(randStr)) options.push(randStr)
       }
       
       shuffle(options)

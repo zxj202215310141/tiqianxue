@@ -119,10 +119,15 @@
       
       const numbers = []
       for (let i = 0; i <= 10; i++) numbers.push(i)
-      shuffle(numbers)
-      
+
       numberPool.innerHTML = ''
-      numbers.slice(0, 6).forEach(num => {
+      // Ensure the correct answer is always in the pool
+      const pool = [correct]
+      const remaining = numbers.filter(n => n !== correct)
+      shuffle(remaining)
+      pool.push(...remaining.slice(0, 5))
+      shuffle(pool)
+      pool.forEach(num => {
         const chip = document.createElement('div')
         chip.className = 'number-chip'
         chip.draggable = true
