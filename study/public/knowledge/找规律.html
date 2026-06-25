@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>找规律</title>
+  <style>
+    :root{--bg:#faf5ff;--card:#ffffff;--accent:#c4b5fd;--accent2:#8b5cf6;--text:#1f2937;--correct:#10b981;--wrong:#ef4444}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .pattern-board{display:flex;gap:12px;margin:20px 0;flex-wrap:wrap;justify-content:center;align-items:center}
+    .pattern-item{width:65px;height:65px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:bold;color:white;transition:all 0.3s}
+    .pattern-item.empty{border:3px dashed #c4b5fd;color:#c4b5fd;background:white}
+    .pattern-item.correct{animation:bounce 0.5s}
+    .pattern-item.wrong{animation:shake 0.5s}
+    .options-board{display:flex;gap:12px;margin:20px 0;flex-wrap:wrap;justify-content:center}
+    .option-item{width:65px;height:65px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:bold;color:white;cursor:grab;transition:transform 0.2s;box-shadow:0 4px 8px rgba(0,0,0,0.15)}
+    .option-item:active{cursor:grabbing;transform:scale(1.1)}
+    .option-item.selected{opacity:0}
+    .question{font-size:18px;font-weight:bold;color:var(--accent2);margin:16px 0;text-align:center}
+    .btn{background:linear-gradient(135deg,var(--accent2),#7c3aed);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(139,92,246,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#64748b;margin-top:8px;text-align:center}
+    .level{font-size:16px;color:#64748b;margin-bottom:8px}
+    @keyframes bounce{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.pattern-item,.option-item{width:55px;height:55px;font-size:24px}}
+    @media(max-width:400px){.pattern-item,.option-item{width:45px;height:45px;font-size:20px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🔍 找规律</h1>
+      <p>找规律是数学中很有趣的一项技能！我们可以通过观察，发现事物之间的规律。</p>
+      <p style="margin-top:8px">🔸 <strong>数字规律</strong>：1、3、5、7、9... 每次加2</p>
+      <p>🔸 <strong>颜色规律</strong>：红、黄、红、黄、红、黄... 交替出现</p>
+      <p>🔸 <strong>形状规律</strong>：○、△、□、○、△、□... 循环重复</p>
+      <p>🔸 <strong>图形规律</strong>：大小、方向、数量的变化</p>
+      <div style="margin-top:16px;padding:12px;background:#f3e8ff;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        观察前面的规律，把正确的图形拖到问号处，完成规律接龙！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🔗 规律接龙游戏</h2>
+      <div class="level">第 <span id="levelNum">1</span> 关</div>
+      <div class="hint">观察规律，把正确的图形拖到问号处</div>
+      
+      <div class="question">请找出规律，完成序列：</div>
+      
+      <div class="pattern-board" id="patternBoard"></div>
+      
+      <div class="options-board" id="optionsBoard"></div>
+      
+      <div class="row">
+        <button id="reset" class="btn">🔄 重新开始</button>
+        <button id="next" class="btn">➡️ 下一关</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const patternBoardEl = document.getElementById('patternBoard')
+    const optionsBoardEl = document.getElementById('optionsBoard')
+    const scoreEl = document.getElementById('scoreVal')
+    const levelEl = document.getElementById('levelNum')
+    const resetBtn = document.getElementById('reset')
+    const nextBtn = document.getElementById('next')
+    const messageEl = document.getElementById('message')
+    
+    const patterns = [
+      { pattern: ['🔴', '🟡', '🔴', '🟡', '🔴'], answer: '🟡', options: ['🟡', '🔴', '🟢', '🔵'] },
+      { pattern: ['🔺', '🔻', '🔺', '🔻', '🔺'], answer: '🔻', options: ['🔻', '🔺', '⬜', '⭕'] },
+      { pattern: ['⭐', '⭐', '🌙', '⭐', '⭐'], answer: '🌙', options: ['🌙', '⭐', '☀️', '🌈'] },
+      { pattern: ['A', 'B', 'C', 'A', 'B'], answer: 'C', options: ['C', 'A', 'B', 'D'] },
+      { pattern: ['1', '2', '1', '2', '1'], answer: '2', options: ['2', '1', '3', '4'] },
+      { pattern: ['🐱', '🐶', '🐱', '🐶', '🐱'], answer: '🐶', options: ['🐶', '🐱', '🐭', '🐹'] },
+      { pattern: ['🔷', '🔶', '🔷', '🔶', '🔷'], answer: '🔶', options: ['🔶', '🔷', '🔸', '🔹'] },
+      { pattern: ['❤️', '💛', '💚', '❤️', '💛'], answer: '💚', options: ['💚', '❤️', '💛', '💙'] }
+    ]
+    
+    let score = 0
+    let currentLevel = 0
+    let selectedOption = null
+    
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+    
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]]
+      }
+      return array
+    }
+    
+    function init() {
+      score = 0
+      currentLevel = 0
+      setScore(0)
+      messageEl.style.display = 'none'
+      loadLevel()
+    }
+    
+    function loadLevel() {
+      levelEl.textContent = currentLevel + 1
+      messageEl.style.display = 'none'
+      selectedOption = null
+      
+      const currentPattern = patterns[currentLevel]
+      
+      patternBoardEl.innerHTML = ''
+      currentPattern.pattern.forEach(item => {
+        const el = document.createElement('div')
+        el.className = 'pattern-item'
+        el.style.background = '#f3e8ff'
+        el.style.color = '#8b5cf6'
+        el.textContent = item
+        patternBoardEl.appendChild(el)
+      })
+      
+      const emptyEl = document.createElement('div')
+      emptyEl.className = 'pattern-item empty'
+      emptyEl.textContent = '?'
+      emptyEl.dataset.empty = 'true'
+      emptyEl.addEventListener('dragover', e => e.preventDefault())
+      emptyEl.addEventListener('drop', handleDrop)
+      patternBoardEl.appendChild(emptyEl)
+      
+      const shuffledOptions = shuffle([...currentPattern.options])
+      optionsBoardEl.innerHTML = ''
+      shuffledOptions.forEach(opt => {
+        const el = document.createElement('div')
+        el.className = 'option-item'
+        el.style.background = `linear-gradient(135deg,#ddd6fe,#c4b5fd)`
+        el.draggable = true
+        el.textContent = opt
+        el.id = 'opt-' + opt
+        el.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('answer', opt)
+          el.style.opacity = '0.6'
+        })
+        el.addEventListener('dragend', () => {
+          el.style.opacity = '1'
+        })
+        optionsBoardEl.appendChild(el)
+      })
+    }
+    
+    function handleDrop(e) {
+      e.preventDefault()
+      const answer = e.dataTransfer.getData('answer')
+      const currentPattern = patterns[currentLevel]
+      
+      if (selectedOption) return
+      
+      if (answer === currentPattern.answer) {
+        const option = document.getElementById('opt-' + answer)
+        option.classList.add('selected')
+        
+        const emptySlot = document.querySelector('[data-empty="true"]')
+        emptySlot.classList.remove('empty')
+        emptySlot.classList.add('correct')
+        emptySlot.style.background = 'linear-gradient(135deg,#d1fae5,#34d399)'
+        emptySlot.style.color = 'white'
+        emptySlot.textContent = answer
+        
+        selectedOption = answer
+        setScore(Math.min(100, score + 10))
+        
+        setTimeout(() => {
+          messageEl.textContent = '🎉 太棒了！找对规律了！'
+          messageEl.style.display = 'block'
+          messageEl.style.color = '#8b5cf6'
+        }, 300)
+      } else {
+        const emptySlot = document.querySelector('[data-empty="true"]')
+        emptySlot.classList.add('wrong')
+        setTimeout(() => {
+          emptySlot.classList.remove('wrong')
+        }, 500)
+        setScore(Math.max(0, score - 5))
+      }
+    }
+    
+    function nextLevel() {
+      if (currentLevel < patterns.length - 1) {
+        currentLevel++
+        loadLevel()
+      } else {
+        messageEl.textContent = '🏆 恭喜通关！你是规律大师！'
+        messageEl.style.display = 'block'
+        messageEl.style.color = '#f59e0b'
+      }
+    }
+    
+    resetBtn.addEventListener('click', init)
+    nextBtn.addEventListener('click', nextLevel)
+    init()
+  </script>
+</body>
+</html>

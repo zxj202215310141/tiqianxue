@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>分类与整理</title>
+  <style>
+    :root{--bg:#f0f9ff;--card:#ffffff;--accent:#60a5fa;--accent2:#3b82f6;--text:#1e293b;--correct:#10b981;--wrong:#ef4444}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .category-board{display:flex;gap:16px;margin:16px 0;flex-wrap:wrap;justify-content:center}
+    .category-box{width:120px;height:100px;border:3px dashed #93c5fd;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:14px;color:#64748b;transition:all 0.3s}
+    .category-box.filled{border-color:var(--correct);background:rgba(16,185,129,0.1)}
+    .category-icon{font-size:24px;margin-bottom:4px}
+    .item-piece{width:50px;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:grab;transition:transform 0.2s;box-shadow:0 4px 8px rgba(0,0,0,0.1)}
+    .item-piece:active{cursor:grabbing;transform:scale(1.1)}
+    .items-board{display:flex;gap:10px;margin:16px 0;flex-wrap:wrap;justify-content:center}
+    .question{font-size:18px;font-weight:bold;color:var(--accent2);margin:16px 0;text-align:center}
+    .btn{background:linear-gradient(135deg,var(--accent2),#2563eb);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(59,130,246,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#64748b;margin-top:8px;text-align:center}
+    .count{font-size:18px;font-weight:bold;color:var(--accent2)}
+    @keyframes pop{0%{transform:scale(0)}100%{transform:scale(1)}}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.category-box{width:100px;height:85px}.item-piece{width:45px;height:45px;font-size:20px}}
+    @media(max-width:400px){.category-box{width:85px;height:75px}.item-piece{width:40px;height:40px;font-size:18px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>📊 分类与整理</h1>
+      <p>分类与整理就是把相同类型的东西放在一起，这样可以让我们的生活更有条理！</p>
+      <p style="margin-top:8px">🔸 <strong>按颜色分类</strong>：把红色的东西放一起，蓝色的放一起。</p>
+      <p>🔸 <strong>按形状分类</strong>：把圆形的放一起，方形的放一起。</p>
+      <p>🔸 <strong>按用途分类</strong>：把水果放一起，动物放一起，交通工具放一起。</p>
+      <p>🔸 <strong>按种类分类</strong>：把文具放一起，玩具放一起，衣物放一起。</p>
+      <div style="margin-top:16px;padding:12px;background:#dbeafe;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        将下方的物品拖到正确的类别框中，学会整理和分类！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🐾 物品分类游戏</h2>
+      <div class="hint">把物品拖到正确的类别框里</div>
+      
+      <div class="question">请把这些物品分类：</div>
+      
+      <div class="category-board" id="categoryBoard"></div>
+      
+      <div class="items-board" id="itemsBoard"></div>
+      
+      <div class="row">
+        <button id="reset" class="btn">🔄 重置游戏</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const categoryBoardEl = document.getElementById('categoryBoard')
+    const itemsBoardEl = document.getElementById('itemsBoard')
+    const scoreEl = document.getElementById('scoreVal')
+    const resetBtn = document.getElementById('reset')
+    const messageEl = document.getElementById('message')
+    
+    const categories = [
+      { name: '水果', icon: '🍎', color: '#f87171' },
+      { name: '动物', icon: '🐶', color: '#fb923c' },
+      { name: '交通工具', icon: '🚗', color: '#60a5fa' },
+      { name: '文具', icon: '✏️', color: '#34d399' }
+    ]
+    
+    const items = [
+      { name: '苹果', icon: '🍎', category: '水果' },
+      { name: '香蕉', icon: '🍌', category: '水果' },
+      { name: '橙子', icon: '🍊', category: '水果' },
+      { name: '小狗', icon: '🐶', category: '动物' },
+      { name: '小猫', icon: '🐱', category: '动物' },
+      { name: '小鸟', icon: '🐦', category: '动物' },
+      { name: '汽车', icon: '🚗', category: '交通工具' },
+      { name: '飞机', icon: '✈️', category: '交通工具' },
+      { name: '火车', icon: '🚂', category: '交通工具' },
+      { name: '铅笔', icon: '✏️', category: '文具' },
+      { name: '橡皮', icon: '🧊', category: '文具' },
+      { name: '书包', icon: '🎒', category: '文具' }
+    ]
+    
+    let score = 0
+    let placed = {}
+    let categoryCounts = {}
+    
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+    
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]]
+      }
+      return array
+    }
+    
+    function init() {
+      score = 0
+      placed = {}
+      categoryCounts = {}
+      categories.forEach(c => categoryCounts[c.name] = 0)
+      setScore(0)
+      messageEl.style.display = 'none'
+      
+      categoryBoardEl.innerHTML = ''
+      categories.forEach(cat => {
+        const box = document.createElement('div')
+        box.className = 'category-box'
+        box.dataset.category = cat.name
+        box.innerHTML = `<span class="category-icon">${cat.icon}</span><span>${cat.name}</span><span class="count" id="count-${cat.name}">0</span>`
+        box.addEventListener('dragover', e => e.preventDefault())
+        box.addEventListener('drop', handleDrop)
+        categoryBoardEl.appendChild(box)
+      })
+      
+      const shuffledItems = shuffle([...items])
+      itemsBoardEl.innerHTML = ''
+      shuffledItems.forEach(item => {
+        const piece = document.createElement('div')
+        piece.className = 'item-piece'
+        piece.style.background = `linear-gradient(135deg,#e0f2fe,#bae6fd)`
+        piece.draggable = true
+        piece.textContent = item.icon
+        piece.id = 'item-' + item.name
+        piece.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('item', JSON.stringify(item))
+          piece.style.opacity = '0.6'
+        })
+        piece.addEventListener('dragend', () => {
+          piece.style.opacity = '1'
+        })
+        itemsBoardEl.appendChild(piece)
+      })
+    }
+    
+    function handleDrop(e) {
+      e.preventDefault()
+      const itemData = JSON.parse(e.dataTransfer.getData('item'))
+      const targetCategory = e.target.dataset.category || e.target.parentElement.dataset.category
+      
+      if (!targetCategory || placed[itemData.name]) return
+      
+      if (itemData.category === targetCategory) {
+        const piece = document.getElementById('item-' + itemData.name)
+        piece.style.opacity = '0'
+        
+        const box = e.target.classList.contains('category-box') ? e.target : e.target.parentElement
+        box.classList.add('filled')
+        
+        categoryCounts[targetCategory]++
+        document.getElementById('count-' + targetCategory).textContent = categoryCounts[targetCategory]
+        
+        placed[itemData.name] = true
+        setScore(Math.min(100, score + 8))
+        
+        if (Object.keys(placed).length === items.length) {
+          setTimeout(() => {
+            messageEl.textContent = '🎉 太棒了！你分类完成了！'
+            messageEl.style.display = 'block'
+            messageEl.style.color = '#3b82f6'
+          }, 300)
+        }
+      } else {
+        const box = e.target.classList.contains('category-box') ? e.target : e.target.parentElement
+        box.style.borderColor = 'var(--wrong)'
+        setTimeout(() => {
+          box.style.borderColor = '#93c5fd'
+        }, 500)
+        setScore(Math.max(0, score - 3))
+      }
+    }
+    
+    resetBtn.addEventListener('click', init)
+    init()
+  </script>
+</body>
+</html>
