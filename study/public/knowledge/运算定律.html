@@ -5,84 +5,83 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>运算定律</title>
   <style>
-    :root{--bg:#f7fff9;--card:#ffffff;--accent:#cfeee0;--text:#0b5b45}
+    :root{--bg:#e0f7fa;--card:#ffffff;--accent:#80deea;--accent2:#006064;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
     *{box-sizing:border-box}
-    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
-    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 6px 16px rgba(0,0,0,0.06)}
-    h1{margin:0 0 8px 0}
-    .knowledge{min-height:240px}
-    .game{min-height:360px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
-    .items{display:flex;flex-wrap:wrap;gap:8px;padding:8px}
-    .item{background:var(--accent);padding:8px 12px;border-radius:10px;cursor:grab}
-    .target{min-height:40px;border:2px dashed #e0e0e0;border-radius:10px;padding:8px;min-width:120px;display:flex;align-items:center;justify-content:center}
-    .row{display:flex;gap:8px;margin-top:8px}
-    .btn{background:#0b5b45;color:white;padding:8px 12px;border-radius:10px;border:none}
-    @media(max-width:900px){.wrap{grid-template-columns:1fr;}}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .question{font-size:22px;font-weight:bold;color:var(--accent2);margin:20px 0;text-align:center}
+    .options{display:flex;flex-wrap:wrap;gap:15px;justify-content:center;margin:20px 0}
+    .opt-btn{min-width:140px;padding:10px 20px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:15px;border:none;font-size:18px;font-weight:bold;color:white;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(0,96,100,0.3)}
+    .opt-btn:active{transform:scale(0.95)}.opt-btn.correct{background:var(--correct)}.opt-btn.wrong{background:var(--wrong)}
+    .btn{background:linear-gradient(135deg,var(--accent2),#00838f);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer}
+    .btn:active{transform:scale(0.95)}.row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}.hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.question{font-size:18px}.opt-btn{min-width:120px;font-size:16px}}
   </style>
-  </head>
+</head>
 <body>
   <div class="wrap">
     <div class="card knowledge">
-      <h1>运算定律</h1>
-      <p>这是关于《运算定律》的简单讲解：用小学生能听懂的语言来说明核心概念。</p>
-      <div style="margin-top:12px">互动说明：将右侧的物品拖拽到正确位置，完成小任务以巩固知识。</div>
+      <h1>📐 运算定律</h1>
+      <p><strong>运算定律</strong>是数学运算中普遍适用的规律，是简便计算的理论基础。</p>
+      <p style="margin-top:8px">💡 五大基本运算定律：
+        <br>① <strong>加法交换律</strong>：a+b = b+a
+        <br>② <strong>加法结合律</strong>：(a+b)+c = a+(b+c)
+        <br>③ <strong>乘法交换律</strong>：a×b = b×a
+        <br>④ <strong>乘法结合律</strong>：(a×b)×c = a×(b×c)
+        <br>⑤ <strong>乘法分配律</strong>：(a+b)×c = a×c+b×c</p>
+      <div style="margin-top:16px;padding:12px;background:#80deea;border-radius:10px"><strong>🎮 游戏说明：</strong><br>识别各算式运用了什么运算定律！</div>
     </div>
-
-    <div class="card game" data-game="drag">
-      <h2 style="margin:0 0 8px 0">小游戏</h2>
-      <div id="gameArea"></div>
-      <div class="row" style="margin-top:12px">
-        <button id="reset" class="btn">重置</button>
-        <div id="score" style="margin-left:8px;align-self:center">得分：0</div>
+    <div class="card game">
+      <h2>📐 运算定律挑战</h2>
+      <div class="hint">判断运用了什么运算定律</div>
+      <div class="question" id="question"></div>
+      <div class="options" id="options"></div>
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
       </div>
     </div>
   </div>
-
   <script>
-    const gameArea = document.getElementById('gameArea')
-    const scoreEl = document.getElementById('score')
-    const resetBtn = document.getElementById('reset')
-    let score=0
-    function setScore(v){score=v;scoreEl.textContent='得分：'+score}
-    resetBtn.addEventListener('click',()=>init())
-
-    function init(){
-      const container = document.querySelector('.game').dataset.game || 'drag'
-      gameArea.innerHTML=''
-      setScore(0)
-      if(container==='drag') renderDrag()
-      else if(container==='puzzle') renderPuzzle()
-      else if(container==='match') renderMatch()
-      else renderDrag()
+    const questionEl=document.getElementById('question'),optionsEl=document.getElementById('options');
+    const nextBtn=document.getElementById('next'),resetBtn=document.getElementById('reset');
+    const scoreEl=document.getElementById('scoreVal'),messageEl=document.getElementById('message');
+    let score=0,currentAnswer='';
+    const questions=[
+      {text:'3+5 = 5+3 运用了什么定律？',options:['加法交换律','加法结合律','乘法交换律','乘法分配律'],answer:'加法交换律'},
+      {text:'(2+3)+7 = 2+(3+7) 运用了？',options:['加法交换律','加法结合律','乘法结合律','乘法交换律'],answer:'加法结合律'},
+      {text:'4×6 = 6×4 运用了？',options:['加法交换律','乘法交换律','乘法结合律','乘法分配律'],answer:'乘法交换律'},
+      {text:'(3×2)×5 = 3×(2×5) 运用了？',options:['乘法交换律','加法结合律','乘法分配律','乘法结合律'],answer:'乘法结合律'},
+      {text:'(4+5)×3 = 4×3+5×3 运用了？',options:['加法交换律','乘法交换律','乘法结合律','乘法分配律'],answer:'乘法分配律'},
+      {text:'25×(4×9) = (25×4)×9 运用了？',options:['乘法交换律','乘法结合律','乘法分配律','加法结合律'],answer:'乘法结合律'},
+      {text:'46+78+54 = 46+54+78 先用了？',options:['加法交换律','加法结合律','乘法交换律','乘法分配律'],answer:'加法交换律'},
+      {text:'5×(8+2) 用乘法分配律等于？',options:['5×8+2','5×8+5×2','5×8×2','5×10'],answer:'5×8+5×2'},
+      {text:'运算定律的作用是？',options:['让计算变难','让计算简便','没有作用','只是理论'],answer:'让计算简便'},
+      {text:'a+b = b+a 是？',options:['加法交换律','加法结合律','乘法交换律','乘法分配律'],answer:'加法交换律'},
+      {text:'(a×b)×c = a×(b×c) 是？',options:['加法结合律','乘法结合律','乘法交换律','乘法分配律'],answer:'乘法结合律'},
+      {text:'99×45+45 = 45×(99+1) 用了？',options:['乘法交换律','乘法结合律','乘法分配律','加法结合律'],answer:'乘法分配律'}
+    ];
+    function setScore(v){score=v;scoreEl.textContent=score}
+    function generateQuestion(){
+      const idx=Math.floor(Math.random()*questions.length),q=questions[idx];currentAnswer=q.answer;
+      questionEl.textContent=q.text;messageEl.style.display='none';optionsEl.innerHTML='';
+      q.options.forEach(opt=>{
+        const btn=document.createElement('button');btn.className='opt-btn';btn.textContent=opt;
+        btn.addEventListener('click',()=>{
+          if(opt===currentAnswer){btn.classList.add('correct');messageEl.textContent='✅ 正确！';messageEl.style.color='var(--correct)';messageEl.style.display='block';setScore(score+10)}
+          else{btn.classList.add('wrong');messageEl.textContent='❌ 答案是 '+currentAnswer;messageEl.style.color='var(--wrong)';messageEl.style.display='block'}
+        });optionsEl.appendChild(btn);
+      });
     }
-
-    function renderDrag(){
-      const items = ['1','2','3','4']
-      const targets = ['A','B','C','D']
-      const it = document.createElement('div'); it.className='items'
-      items.forEach(t=>{const d=document.createElement('div');d.className='item';d.draggable=true;d.textContent=t;d.id='it-'+t;d.addEventListener('dragstart',e=>e.dataTransfer.setData('text',t));it.appendChild(d)})
-      const tarWrap=document.createElement('div');tarWrap.style.display='grid';tarWrap.style.gridTemplateColumns='repeat(2,1fr)';tarWrap.style.gap='8px';tarWrap.style.marginTop='12px'
-      targets.forEach(t=>{const d=document.createElement('div');d.className='target';d.dataset.want=t;d.textContent='目标 '+t;d.addEventListener('dragover',e=>e.preventDefault());d.addEventListener('drop',e=>{const val=e.dataTransfer.getData('text'); if(val===t){d.textContent='✅ '+t;d.style.border='2px solid #0b5b45'; setScore(score+1)} else {d.textContent='❌ '+val; d.style.border='2px solid #d9534f'}});tarWrap.appendChild(d)})
-      gameArea.appendChild(it);gameArea.appendChild(tarWrap)
-    }
-
-    function renderMatch(){
-      const pairs=[['苹果','A'],['香蕉','B'],['橙子','C']]
-      const left=document.createElement('div');left.className='items'
-      pairs.forEach(p=>{const d=document.createElement('div');d.className='item';d.textContent=p[0];d.draggable=true;d.id='l-'+p[1];d.addEventListener('dragstart',e=>e.dataTransfer.setData('text',p[1]));left.appendChild(d)})
-      const right=document.createElement('div');right.style.display='grid';right.style.gridTemplateColumns='1fr';right.style.gap='8px';
-      ['A','B','C'].forEach(code=>{const t=document.createElement('div');t.className='target';t.dataset.want=code;t.textContent='放到这里';t.addEventListener('dragover',e=>e.preventDefault());t.addEventListener('drop',e=>{const v=e.dataTransfer.getData('text'); if(v===code){t.textContent='正确';t.style.border='2px solid #0b5b45'; setScore(score+1)} else {t.textContent='错误';t.style.border='2px solid #d9534f'}});right.appendChild(t)})
-      gameArea.appendChild(left);gameArea.appendChild(right)
-    }
-
-    function renderPuzzle(){
-      const wrap=document.createElement('div');wrap.style.display='grid';wrap.style.gridTemplateColumns='repeat(3,1fr)';wrap.style.gap='6px';
-      for(let i=1;i<=9;i++){const d=document.createElement('div');d.className='item';d.textContent=i;d.addEventListener('click',()=>{alert('拼图点击：'+i)});wrap.appendChild(d)}
-      gameArea.appendChild(wrap)
-    }
-
-    init()
+    function init(){score=0;setScore(0);generateQuestion()}
+    nextBtn.addEventListener('click',generateQuestion);resetBtn.addEventListener('click',init);init();
   </script>
 </body>
 </html>

@@ -5,84 +5,80 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>周期规律</title>
   <style>
-    :root{--bg:#f7fff9;--card:#ffffff;--accent:#cfeee0;--text:#0b5b45}
+    :root{--bg:#fce4ec;--card:#ffffff;--accent:#f48fb1;--accent2:#880e4f;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
     *{box-sizing:border-box}
-    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
-    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 6px 16px rgba(0,0,0,0.06)}
-    h1{margin:0 0 8px 0}
-    .knowledge{min-height:240px}
-    .game{min-height:360px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
-    .items{display:flex;flex-wrap:wrap;gap:8px;padding:8px}
-    .item{background:var(--accent);padding:8px 12px;border-radius:10px;cursor:grab}
-    .target{min-height:40px;border:2px dashed #e0e0e0;border-radius:10px;padding:8px;min-width:120px;display:flex;align-items:center;justify-content:center}
-    .row{display:flex;gap:8px;margin-top:8px}
-    .btn{background:#0b5b45;color:white;padding:8px 12px;border-radius:10px;border:none}
-    @media(max-width:900px){.wrap{grid-template-columns:1fr;}}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .question{font-size:22px;font-weight:bold;color:var(--accent2);margin:20px 0;text-align:center}
+    .options{display:flex;flex-wrap:wrap;gap:15px;justify-content:center;margin:20px 0}
+    .opt-btn{min-width:130px;padding:10px 20px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:15px;border:none;font-size:22px;font-weight:bold;color:white;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(136,14,79,0.3)}
+    .opt-btn:active{transform:scale(0.95)}.opt-btn.correct{background:var(--correct)}.opt-btn.wrong{background:var(--wrong)}
+    .btn{background:linear-gradient(135deg,var(--accent2),#c2185b);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer}
+    .btn:active{transform:scale(0.95)}.row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}.hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.question{font-size:18px}.opt-btn{min-width:110px;font-size:20px}}
   </style>
-  </head>
+</head>
 <body>
   <div class="wrap">
     <div class="card knowledge">
-      <h1>周期规律</h1>
-      <p>这是关于《周期规律》的简单讲解：用小学生能听懂的语言来说明核心概念。</p>
-      <div style="margin-top:12px">互动说明：将右侧的物品拖拽到正确位置，完成小任务以巩固知识。</div>
+      <h1>🔄 周期规律</h1>
+      <p>某类现象每隔一定的<strong>时间</strong>或<strong>次数</strong>重复出现，叫做<strong>周期规律</strong>。重复出现的一组叫一个<strong>周期</strong>。</p>
+      <p style="margin-top:8px">💡 解题方法：<strong>总次数 ÷ 周期长度 = 组数...余数</strong>。余数是几，就是周期中的第几个。</p>
+      <p style="margin-top:8px">🔢 例如：红灯、绿灯、黄灯循环（周期3）。第10盏灯：10÷3=3余1 → 第10盏=红灯。</p>
+      <p style="margin-top:8px">📝 常考题型：彩灯排列、星期几、数字尾数等。</p>
+      <div style="margin-top:16px;padding:12px;background:#f48fb1;border-radius:10px"><strong>🎮 游戏说明：</strong><br>用周期规律计算指定位置是什么！</div>
     </div>
-
-    <div class="card game" data-game="drag">
-      <h2 style="margin:0 0 8px 0">小游戏</h2>
-      <div id="gameArea"></div>
-      <div class="row" style="margin-top:12px">
-        <button id="reset" class="btn">重置</button>
-        <div id="score" style="margin-left:8px;align-self:center">得分：0</div>
+    <div class="card game">
+      <h2>🔄 周期规律挑战</h2>
+      <div class="hint">计算周期中的指定位置</div>
+      <div class="question" id="question"></div>
+      <div class="options" id="options"></div>
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
       </div>
     </div>
   </div>
-
   <script>
-    const gameArea = document.getElementById('gameArea')
-    const scoreEl = document.getElementById('score')
-    const resetBtn = document.getElementById('reset')
-    let score=0
-    function setScore(v){score=v;scoreEl.textContent='得分：'+score}
-    resetBtn.addEventListener('click',()=>init())
-
-    function init(){
-      const container = document.querySelector('.game').dataset.game || 'drag'
-      gameArea.innerHTML=''
-      setScore(0)
-      if(container==='drag') renderDrag()
-      else if(container==='puzzle') renderPuzzle()
-      else if(container==='match') renderMatch()
-      else renderDrag()
+    const questionEl=document.getElementById('question'),optionsEl=document.getElementById('options');
+    const nextBtn=document.getElementById('next'),resetBtn=document.getElementById('reset');
+    const scoreEl=document.getElementById('scoreVal'),messageEl=document.getElementById('message');
+    let score=0,currentAnswer='';
+    const questions=[
+      {text:'按照🔴🔵🟢循环，第8个是什么颜色？',options:['🔴','🔵','🟢','无法确定'],answer:'🔵'},
+      {text:'今天是周一，15天后是周几？',options:['周一','周二','周三','周四'],answer:'周二'},
+      {text:'彩旗按红黄蓝绿排列，第25面是什么颜色？',options:['红','黄','蓝','绿'],answer:'红'},
+      {text:'数字串123123123...第50位是？',options:['1','2','3','无法确定'],answer:'1'},
+      {text:'3的1次方尾数是3，3²尾数是9，3³尾数是7...3的10次方尾数是？',options:['3','9','7','1'],answer:'9'},
+      {text:'ABCCABCCABCC...第20个字母是？',options:['A','B','C','无法确定'],answer:'C'},
+      {text:'周期为5，第23个和第3个？',options:['相同','不同','差3个','无法判断'],answer:'相同'},
+      {text:'6月1日是周三，6月30日是周几？',options:['周三','周四','周五','周六'],answer:'周四'},
+      {text:'按⚪⚫⚪⚫...排，第15个是？',options:['⚪','⚫','黑白','无法判断'],answer:'⚪'},
+      {text:'字母ABCDE重复写，第37个是？',options:['A','B','C','D'],answer:'B'},
+      {text:'周期规律的解题关键是？',options:['加法','减法','除法求余数','乘法'],answer:'除法求余数'},
+      {text:'如果周期是4，第12个和第4个？',options:['相同','差1个','差2个','差3个'],answer:'相同'}
+    ];
+    function setScore(v){score=v;scoreEl.textContent=score}
+    function generateQuestion(){
+      const idx=Math.floor(Math.random()*questions.length),q=questions[idx];currentAnswer=q.answer;
+      questionEl.textContent=q.text;messageEl.style.display='none';optionsEl.innerHTML='';
+      q.options.forEach(opt=>{
+        const btn=document.createElement('button');btn.className='opt-btn';btn.textContent=opt;
+        btn.addEventListener('click',()=>{
+          if(opt===currentAnswer){btn.classList.add('correct');messageEl.textContent='✅ 正确！';messageEl.style.color='var(--correct)';messageEl.style.display='block';setScore(score+10)}
+          else{btn.classList.add('wrong');messageEl.textContent='❌ 正确答案是 '+currentAnswer;messageEl.style.color='var(--wrong)';messageEl.style.display='block'}
+        });optionsEl.appendChild(btn);
+      });
     }
-
-    function renderDrag(){
-      const items = ['1','2','3','4']
-      const targets = ['A','B','C','D']
-      const it = document.createElement('div'); it.className='items'
-      items.forEach(t=>{const d=document.createElement('div');d.className='item';d.draggable=true;d.textContent=t;d.id='it-'+t;d.addEventListener('dragstart',e=>e.dataTransfer.setData('text',t));it.appendChild(d)})
-      const tarWrap=document.createElement('div');tarWrap.style.display='grid';tarWrap.style.gridTemplateColumns='repeat(2,1fr)';tarWrap.style.gap='8px';tarWrap.style.marginTop='12px'
-      targets.forEach(t=>{const d=document.createElement('div');d.className='target';d.dataset.want=t;d.textContent='目标 '+t;d.addEventListener('dragover',e=>e.preventDefault());d.addEventListener('drop',e=>{const val=e.dataTransfer.getData('text'); if(val===t){d.textContent='✅ '+t;d.style.border='2px solid #0b5b45'; setScore(score+1)} else {d.textContent='❌ '+val; d.style.border='2px solid #d9534f'}});tarWrap.appendChild(d)})
-      gameArea.appendChild(it);gameArea.appendChild(tarWrap)
-    }
-
-    function renderMatch(){
-      const pairs=[['苹果','A'],['香蕉','B'],['橙子','C']]
-      const left=document.createElement('div');left.className='items'
-      pairs.forEach(p=>{const d=document.createElement('div');d.className='item';d.textContent=p[0];d.draggable=true;d.id='l-'+p[1];d.addEventListener('dragstart',e=>e.dataTransfer.setData('text',p[1]));left.appendChild(d)})
-      const right=document.createElement('div');right.style.display='grid';right.style.gridTemplateColumns='1fr';right.style.gap='8px';
-      ['A','B','C'].forEach(code=>{const t=document.createElement('div');t.className='target';t.dataset.want=code;t.textContent='放到这里';t.addEventListener('dragover',e=>e.preventDefault());t.addEventListener('drop',e=>{const v=e.dataTransfer.getData('text'); if(v===code){t.textContent='正确';t.style.border='2px solid #0b5b45'; setScore(score+1)} else {t.textContent='错误';t.style.border='2px solid #d9534f'}});right.appendChild(t)})
-      gameArea.appendChild(left);gameArea.appendChild(right)
-    }
-
-    function renderPuzzle(){
-      const wrap=document.createElement('div');wrap.style.display='grid';wrap.style.gridTemplateColumns='repeat(3,1fr)';wrap.style.gap='6px';
-      for(let i=1;i<=9;i++){const d=document.createElement('div');d.className='item';d.textContent=i;d.addEventListener('click',()=>{alert('拼图点击：'+i)});wrap.appendChild(d)}
-      gameArea.appendChild(wrap)
-    }
-
-    init()
+    function init(){score=0;setScore(0);generateQuestion()}
+    nextBtn.addEventListener('click',generateQuestion);resetBtn.addEventListener('click',init);init();
   </script>
 </body>
 </html>

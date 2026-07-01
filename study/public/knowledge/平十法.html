@@ -5,84 +5,80 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>平十法</title>
   <style>
-    :root{--bg:#f7fff9;--card:#ffffff;--accent:#cfeee0;--text:#0b5b45}
+    :root{--bg:#e3f2fd;--card:#ffffff;--accent:#90caf9;--accent2:#0d47a1;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
     *{box-sizing:border-box}
-    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
-    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 6px 16px rgba(0,0,0,0.06)}
-    h1{margin:0 0 8px 0}
-    .knowledge{min-height:240px}
-    .game{min-height:360px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
-    .items{display:flex;flex-wrap:wrap;gap:8px;padding:8px}
-    .item{background:var(--accent);padding:8px 12px;border-radius:10px;cursor:grab}
-    .target{min-height:40px;border:2px dashed #e0e0e0;border-radius:10px;padding:8px;min-width:120px;display:flex;align-items:center;justify-content:center}
-    .row{display:flex;gap:8px;margin-top:8px}
-    .btn{background:#0b5b45;color:white;padding:8px 12px;border-radius:10px;border:none}
-    @media(max-width:900px){.wrap{grid-template-columns:1fr;}}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .question{font-size:24px;font-weight:bold;color:var(--accent2);margin:20px 0;text-align:center}
+    .options{display:flex;flex-wrap:wrap;gap:15px;justify-content:center;margin:20px 0}
+    .opt-btn{min-width:120px;padding:10px 20px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:15px;border:none;font-size:24px;font-weight:bold;color:white;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(13,71,161,0.3)}
+    .opt-btn:active{transform:scale(0.95)}.opt-btn.correct{background:var(--correct)}.opt-btn.wrong{background:var(--wrong)}
+    .btn{background:linear-gradient(135deg,var(--accent2),#1565c0);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer}
+    .btn:active{transform:scale(0.95)}.row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}.hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.question{font-size:20px}.opt-btn{min-width:100px;font-size:22px}}
   </style>
-  </head>
+</head>
 <body>
   <div class="wrap">
     <div class="card knowledge">
-      <h1>平十法</h1>
-      <p>这是关于《平十法》的简单讲解：用小学生能听懂的语言来说明核心概念。</p>
-      <div style="margin-top:12px">互动说明：将右侧的物品拖拽到正确位置，完成小任务以巩固知识。</div>
+      <h1>〰️ 平十法</h1>
+      <p>在20以内退位减法中，把减数<strong>拆成两个数</strong>，使被减数先减去一个数得10，再减去剩余的数。</p>
+      <p style="margin-top:8px">💡 步骤：看被减数的<strong>个位</strong>是几，就把减数拆成这个数和另一个数。</p>
+      <p style="margin-top:8px">🔢 例如：15-7。15的个位是5，把7拆成5和2。15-5=10，10-2=8。</p>
+      <p style="margin-top:8px">📝 平十法也叫"连减法"，和破十法思路不同，结果相同。</p>
+      <div style="margin-top:16px;padding:12px;background:#90caf9;border-radius:10px"><strong>🎮 游戏说明：</strong><br>用平十法计算，选择正确答案！</div>
     </div>
-
-    <div class="card game" data-game="drag">
-      <h2 style="margin:0 0 8px 0">小游戏</h2>
-      <div id="gameArea"></div>
-      <div class="row" style="margin-top:12px">
-        <button id="reset" class="btn">重置</button>
-        <div id="score" style="margin-left:8px;align-self:center">得分：0</div>
+    <div class="card game">
+      <h2>〰️ 平十法挑战</h2>
+      <div class="hint">用平十法计算</div>
+      <div class="question" id="question"></div>
+      <div class="options" id="options"></div>
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
       </div>
     </div>
   </div>
-
   <script>
-    const gameArea = document.getElementById('gameArea')
-    const scoreEl = document.getElementById('score')
-    const resetBtn = document.getElementById('reset')
-    let score=0
-    function setScore(v){score=v;scoreEl.textContent='得分：'+score}
-    resetBtn.addEventListener('click',()=>init())
-
-    function init(){
-      const container = document.querySelector('.game').dataset.game || 'drag'
-      gameArea.innerHTML=''
-      setScore(0)
-      if(container==='drag') renderDrag()
-      else if(container==='puzzle') renderPuzzle()
-      else if(container==='match') renderMatch()
-      else renderDrag()
+    const questionEl=document.getElementById('question'),optionsEl=document.getElementById('options');
+    const nextBtn=document.getElementById('next'),resetBtn=document.getElementById('reset');
+    const scoreEl=document.getElementById('scoreVal'),messageEl=document.getElementById('message');
+    let score=0,currentAnswer='';
+    const questions=[
+      {text:'14 - 6 = ？（14-4=10, 10-?=8）',options:['1','2','3','4'],answer:'2'},
+      {text:'16 - 9 = ？',options:['6','7','8','9'],answer:'7'},
+      {text:'13 - 7，应该把7拆成几和几？',options:['3和4','5和2','2和5','1和6'],answer:'3和4'},
+      {text:'15 - 8，先减几？',options:['5','8','3','10'],answer:'5'},
+      {text:'11 - 4 = ？',options:['6','7','8','5'],answer:'7'},
+      {text:'12 - 6 = ？',options:['4','5','6','7'],answer:'6'},
+      {text:'平十法连减的第二步是？',options:['10减剩余','加剩余','乘剩余','除剩余'],answer:'10减剩余'},
+      {text:'17 - 8 = ？',options:['8','9','7','10'],answer:'9'},
+      {text:'平十法拆的是哪个数？',options:['被减数','减数','和','差'],answer:'减数'},
+      {text:'13 - 5 = ？',options:['7','8','9','6'],answer:'8'},
+      {text:'18 - 9 = ？',options:['7','8','9','10'],answer:'9'},
+      {text:'平十法的第一步先减到什么数？',options:['5','10','0','20'],answer:'10'}
+    ];
+    function setScore(v){score=v;scoreEl.textContent=score}
+    function generateQuestion(){
+      const idx=Math.floor(Math.random()*questions.length),q=questions[idx];currentAnswer=q.answer;
+      questionEl.textContent=q.text;messageEl.style.display='none';optionsEl.innerHTML='';
+      q.options.forEach(opt=>{
+        const btn=document.createElement('button');btn.className='opt-btn';btn.textContent=opt;
+        btn.addEventListener('click',()=>{
+          if(opt===currentAnswer){btn.classList.add('correct');messageEl.textContent='✅ 正确！';messageEl.style.color='var(--correct)';messageEl.style.display='block';setScore(score+10)}
+          else{btn.classList.add('wrong');messageEl.textContent='❌ 答案是 '+currentAnswer;messageEl.style.color='var(--wrong)';messageEl.style.display='block'}
+        });optionsEl.appendChild(btn);
+      });
     }
-
-    function renderDrag(){
-      const items = ['1','2','3','4']
-      const targets = ['A','B','C','D']
-      const it = document.createElement('div'); it.className='items'
-      items.forEach(t=>{const d=document.createElement('div');d.className='item';d.draggable=true;d.textContent=t;d.id='it-'+t;d.addEventListener('dragstart',e=>e.dataTransfer.setData('text',t));it.appendChild(d)})
-      const tarWrap=document.createElement('div');tarWrap.style.display='grid';tarWrap.style.gridTemplateColumns='repeat(2,1fr)';tarWrap.style.gap='8px';tarWrap.style.marginTop='12px'
-      targets.forEach(t=>{const d=document.createElement('div');d.className='target';d.dataset.want=t;d.textContent='目标 '+t;d.addEventListener('dragover',e=>e.preventDefault());d.addEventListener('drop',e=>{const val=e.dataTransfer.getData('text'); if(val===t){d.textContent='✅ '+t;d.style.border='2px solid #0b5b45'; setScore(score+1)} else {d.textContent='❌ '+val; d.style.border='2px solid #d9534f'}});tarWrap.appendChild(d)})
-      gameArea.appendChild(it);gameArea.appendChild(tarWrap)
-    }
-
-    function renderMatch(){
-      const pairs=[['苹果','A'],['香蕉','B'],['橙子','C']]
-      const left=document.createElement('div');left.className='items'
-      pairs.forEach(p=>{const d=document.createElement('div');d.className='item';d.textContent=p[0];d.draggable=true;d.id='l-'+p[1];d.addEventListener('dragstart',e=>e.dataTransfer.setData('text',p[1]));left.appendChild(d)})
-      const right=document.createElement('div');right.style.display='grid';right.style.gridTemplateColumns='1fr';right.style.gap='8px';
-      ['A','B','C'].forEach(code=>{const t=document.createElement('div');t.className='target';t.dataset.want=code;t.textContent='放到这里';t.addEventListener('dragover',e=>e.preventDefault());t.addEventListener('drop',e=>{const v=e.dataTransfer.getData('text'); if(v===code){t.textContent='正确';t.style.border='2px solid #0b5b45'; setScore(score+1)} else {t.textContent='错误';t.style.border='2px solid #d9534f'}});right.appendChild(t)})
-      gameArea.appendChild(left);gameArea.appendChild(right)
-    }
-
-    function renderPuzzle(){
-      const wrap=document.createElement('div');wrap.style.display='grid';wrap.style.gridTemplateColumns='repeat(3,1fr)';wrap.style.gap='6px';
-      for(let i=1;i<=9;i++){const d=document.createElement('div');d.className='item';d.textContent=i;d.addEventListener('click',()=>{alert('拼图点击：'+i)});wrap.appendChild(d)}
-      gameArea.appendChild(wrap)
-    }
-
-    init()
+    function init(){score=0;setScore(0);generateQuestion()}
+    nextBtn.addEventListener('click',generateQuestion);resetBtn.addEventListener('click',init);init();
   </script>
 </body>
 </html>
