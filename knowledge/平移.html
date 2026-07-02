@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>平移</title>
+  <style>
+    :root{--bg:#e8f5e9;--card:#ffffff;--accent:#a5d6a7;--accent2:#43a047;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:16px 0;background:#e0e0e0;padding:10px;border-radius:12px;position:relative}
+    .cell{width:55px;height:55px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;cursor:pointer;transition:all 0.3s;background:#ffffff;border:2px solid #ddd}
+    .cell.shape{background:linear-gradient(135deg,var(--accent2),#66bb6a);color:white;border:none;box-shadow:0 3px 8px rgba(67,160,71,0.4)}
+    .cell.target{background:#fff9c4;border:3px dashed #f9a825}
+    .cell.matched{background:linear-gradient(135deg,var(--correct),#55efc4);color:white;border:none;animation:pulse 0.5s}
+    .cell.wrong{background:var(--wrong);color:white;animation:shake 0.4s}
+    .question-box{font-size:18px;font-weight:bold;color:var(--text);margin:12px 0;text-align:center;padding:10px 16px;background:#e8f5e9;border-radius:10px}
+    .btn{background:linear-gradient(135deg,var(--accent2),#66bb6a);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(67,160,71,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:12px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    .arrow-indicator{font-size:32px;margin:0 8px;animation:bounce 1s infinite}
+    @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+    @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.cell{width:45px;height:45px;font-size:20px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>↔️ 平移</h1>
+      <p>平移是指图形沿着直线方向移动，移动过程中<strong>形状、大小和方向都不改变</strong>，只有位置发生变化。</p>
+      <p style="margin-top:8px">📐 平移的三要素：<strong>方向</strong>（上下左右）、<strong>距离</strong>（移动几格）、<strong>对应点</strong>（图形上每个点都移动相同距离）。</p>
+      <p style="margin-top:8px">💡 生活中平移的例子：电梯上下移动、推拉门、抽屉的拉出推入。</p>
+      <div style="margin-top:16px;padding:12px;background:#c8e6c9;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        观察左边的彩色图形，找出它向右平移3格后的正确位置并点击。注意：平移后形状和方向不变！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🧩 平移大挑战</h2>
+      <div class="hint" id="hintText">找出彩色图形平移后的正确位置</div>
+      <div class="question-box" id="questionText">⬆️ 向上平移 2 格</div>
+      <div class="grid" id="gameGrid"></div>
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      <div id="msg" style="margin-top:12px;font-weight:bold;font-size:20px;display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const gridEl=document.getElementById('gameGrid'),scoreEl=document.getElementById('scoreVal'),
+      msgEl=document.getElementById('msg'),questionEl=document.getElementById('questionText'),
+      hintEl=document.getElementById('hintText');
+    let score=0,locked=false,currentAnswer=null,originalCells=[];
+    const ROWS=5,COLS=5;
+
+    function setScore(v){score=v;scoreEl.textContent=score}
+
+    const shapes=[
+      {cells:[[0,1],[0,2],[0,3]],color:'#43a047'},
+      {cells:[[0,0],[0,1],[1,0],[1,1]],color:'#43a047'},
+      {cells:[[0,1],[1,0],[1,1],[1,2]],color:'#43a047'},
+      {cells:[[0,0],[0,1],[0,2],[1,1]],color:'#43a047'},
+      {cells:[[0,0],[0,1],[1,1],[2,1]],color:'#43a047'},
+    ];
+
+    const translations=[
+      {dr:0,dc:2,name:'➡️ 向右平移 2 格'},
+      {dr:-2,dc:0,name:'⬆️ 向上平移 2 格'},
+      {dr:2,dc:0,name:'⬇️ 向下平移 2 格'},
+      {dr:0,dc:-2,name:'⬅️ 向左平移 2 格'},
+      {dr:-1,dc:2,name:'↗️ 向右上平移'},
+      {dr:2,dc:-1,name:'↙️ 向左下平移'},
+      {dr:-2,dc:2,name:'↗️ 右上平移 2 格'},
+      {dr:2,dc:2,name:'↘️ 右下平移 2 格'},
+    ];
+
+    function isInShape(r,c,cells){return cells.some(([cr,cc])=>cr===r&&cc===c)}
+    function inBounds(r,c){return r>=0&&r<ROWS&&c>=0&&c<COLS}
+
+    function gen(){
+      locked=false;msgEl.style.display='none';
+      const shape=shapes[Math.floor(Math.random()*shapes.length)];
+      const trans=translations[Math.floor(Math.random()*translations.length)];
+      questionEl.textContent=trans.name;
+
+      const minR=Math.min(...shape.cells.map(([r])=>r));
+      const maxR=Math.max(...shape.cells.map(([r])=>r));
+      const minC=Math.min(...shape.cells.map(([,c])=>c));
+      const maxC=Math.max(...shape.cells.map(([,c])=>c));
+      const h=maxR-minR+1,w=maxC-minC+1;
+      const maxDr=ROWS-h,maxDc=COLS-w;
+      const startR=Math.floor(Math.random()*(maxDr+1));
+      const startC=Math.floor(Math.random()*(maxDc+1));
+      const translatedCells=shape.cells.map(([r,c])=>[r+trans.dr,c+trans.dc]);
+      const allInBounds=translatedCells.every(([r,c])=>inBounds(r,c));
+
+      if(!allInBounds){
+        return gen();
+      }
+
+      const offsetCells=shape.cells.map(([r,c])=>[r+startR,c+startC]);
+      if(!offsetCells.every(([r,c])=>inBounds(r,c))){
+        return gen();
+      }
+
+      originalCells=offsetCells;
+      const answerCells=offsetCells.map(([r,c])=>[r+trans.dr,c+trans.dc]);
+      currentAnswer=answerCells;
+
+      const allTargets=new Set(offsetCells.map(([r,c])=>r+','+c));
+      answerCells.forEach(([r,c])=>allTargets.add(r+','+c));
+      const distractors=[];
+      while(allTargets.size<12){
+        const rr=Math.floor(Math.random()*ROWS),cc=Math.floor(Math.random()*COLS);
+        if(!allTargets.has(rr+','+cc)){allTargets.add(rr+','+cc);distractors.push([rr,cc])}
+      }
+
+      gridEl.innerHTML='';
+      for(let r=0;r<ROWS;r++){
+        for(let c=0;c<COLS;c++){
+          const cell=document.createElement('div');
+          cell.className='cell';
+          cell.dataset.r=r;cell.dataset.c=c;
+          if(isInShape(r,c,offsetCells)){
+            cell.classList.add('shape');
+            cell.textContent='■';
+          }else if(isInShape(r,c,answerCells)){
+            cell.classList.add('target');
+          }
+          cell.addEventListener('click',()=>handleClick(r,c,cell));
+          gridEl.appendChild(cell);
+        }
+      }
+    }
+
+    function handleClick(r,c,cell){
+      if(locked)return;
+      if(isInShape(r,c,originalCells))return;
+      const isAnswer=currentAnswer.some(([ar,ac])=>ar===r&&ac===c);
+      if(isAnswer){
+        cell.classList.add('matched');
+        cell.textContent='✓';
+        locked=true;
+        msgEl.textContent='✅ 正确！这就是平移后的位置！';
+        msgEl.style.color='var(--correct)';msgEl.style.display='block';
+        currentAnswer.forEach(([ar,ac])=>{
+          const ans=gridEl.querySelector(`[data-r="${ar}"][data-c="${ac}"]`);
+          if(ans){ans.classList.add('matched');ans.textContent='✓'}
+        });
+        setScore(score+10);
+        setTimeout(gen,1500);
+      }else{
+        cell.classList.add('wrong');
+        setTimeout(()=>cell.classList.remove('wrong'),400);
+        setScore(Math.max(0,score-2));
+      }
+    }
+
+    function init(){score=0;setScore(0);gen()}
+    document.getElementById('next').onclick=gen;
+    init();
+  </script>
+</body>
+</html>

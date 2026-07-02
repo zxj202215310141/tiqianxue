@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>平均数</title>
+  <style>
+    :root{--bg:#e0f7fa;--card:#ffffff;--accent:#80deea;--accent2:#00838f;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .data-display{display:flex;gap:12px;margin:16px 0;flex-wrap:wrap;justify-content:center;align-items:flex-end}
+    .data-bar{display:flex;flex-direction:column;align-items:center;gap:6px}
+    .bar{width:45px;background:linear-gradient(180deg,var(--accent2),#4dd0e1);border-radius:8px 8px 0 0;transition:height 0.5s;display:flex;align-items:flex-start;justify-content:center;color:white;font-weight:bold;font-size:14px;padding-top:4px}
+    .bar-label{font-size:13px;color:#666;font-weight:bold}
+    .avg-line{width:100%;height:3px;background:var(--accent2);position:relative;margin:8px 0;border-radius:2px}
+    .avg-line::after{content:'平均数';position:absolute;right:-50px;top:-10px;font-size:12px;color:var(--accent2);font-weight:bold}
+    .input-area{display:flex;gap:10px;margin:12px 0;align-items:center;flex-wrap:wrap;justify-content:center}
+    .num-input{width:60px;height:45px;border:2px solid #b2dfdb;border-radius:10px;text-align:center;font-size:20px;font-weight:bold;color:var(--accent2)}
+    .num-input:focus{outline:none;border-color:var(--accent2)}
+    .options-row{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0;justify-content:center}
+    .opt-btn{width:90px;padding:10px;border:3px solid #e0e0e0;border-radius:12px;background:white;font-size:16px;font-weight:bold;cursor:pointer;transition:all 0.3s}
+    .opt-btn:hover{border-color:var(--accent2);background:#e0f7fa;transform:translateY(-2px)}
+    .opt-btn.correct{border-color:var(--correct);background:var(--correct);color:white;animation:pulse 0.5s}
+    .opt-btn.wrong{border-color:var(--wrong);background:var(--wrong);color:white;animation:shake 0.4s}
+    .btn{background:linear-gradient(135deg,var(--accent2),#4dd0e1);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(0,131,143,0.3)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:12px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.bar{width:35px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>📊 平均数</h1>
+      <p>平均数是表示一组数据<strong>集中趋势</strong>的统计量。它等于所有数据之和除以数据的个数。</p>
+      <p style="margin-top:8px">📐 计算公式：<strong>平均数 = 总和 ÷ 个数</strong></p>
+      <p style="margin-top:8px">💡 例如：小明3次数学考试成绩分别是85、90、95分，平均分 = (85+90+95)÷3 = <strong>90分</strong>。</p>
+      <p style="margin-top:8px">⚠️ 注意：平均数不一定是数据中的某个值；平均数受极端值影响较大。</p>
+      <div style="margin-top:16px;padding:12px;background:#b2dfdb;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        观察下面的数据（用柱状图表示），计算出它们的平均数，点击正确答案！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>📊 平均数计算挑战</h2>
+      <div class="hint">计算这组数据的平均数</div>
+      <div class="data-display" id="dataDisplay"></div>
+      <div class="avg-line" id="avgLine" style="width:90%"></div>
+      <div style="text-align:center;font-weight:bold;color:var(--accent2);margin:8px 0">
+        平均数 = 总和 ÷ 个数 = ？
+      </div>
+      <div class="options-row" id="optionsRow"></div>
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      <div id="msg" style="margin-top:12px;font-weight:bold;font-size:20px;display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const dataDisplay=document.getElementById('dataDisplay'),optionsRow=document.getElementById('optionsRow'),
+      scoreEl=document.getElementById('scoreVal'),msgEl=document.getElementById('msg');
+    let score=0,locked=false,currentAnswer=null;
+
+    function setScore(v){score=v;scoreEl.textContent=score}
+    function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+    function gen(){
+      locked=false;msgEl.style.display='none';
+      const count=3+Math.floor(Math.random()*3);
+      const data=[];
+      let sum=0;
+      for(let i=0;i<count;i++){const v=2+Math.floor(Math.random()*19);data.push(v);sum+=v}
+      const avg=Math.round(sum/count*10)/10;
+      currentAnswer=avg;
+      const maxVal=Math.max(...data);
+
+      dataDisplay.innerHTML='';
+      data.forEach((v,i)=>{
+        const bar=document.createElement('div');bar.className='data-bar';
+        const barDiv=document.createElement('div');bar.className='bar';
+        barDiv.style.height=(v/maxVal*120+20)+'px';barDiv.textContent=v;
+        const lbl=document.createElement('div');lbl.className='bar-label';lbl.textContent='第'+(i+1)+'个';
+        bar.appendChild(barDiv);bar.appendChild(lbl);dataDisplay.appendChild(bar);
+      });
+
+      optionsRow.innerHTML='';
+      const opts=shuffle([avg,Math.round((avg+2)*10)/10,Math.round((avg-1)*10)/10,Math.round((avg+3)*10)/10].filter((v,i,a)=>a.indexOf(v)===i));
+      while(opts.length<4){opts.push(Math.round((avg+Math.random()*4-2)*10)/10)}
+      const unique=[...new Set(opts)].slice(0,4);
+      unique.forEach(v=>{
+        const btn=document.createElement('button');btn.className='opt-btn';btn.textContent=v;
+        btn.addEventListener('click',()=>handleAnswer(v,btn));optionsRow.appendChild(btn);
+      });
+    }
+
+    function handleAnswer(val,btn){
+      if(locked)return;
+      if(Math.abs(val-currentAnswer)<0.01){
+        btn.classList.add('correct');locked=true;
+        msgEl.textContent='✅ 正确！平均数是 '+currentAnswer+'（总和÷个数）';
+        msgEl.style.color='var(--correct)';msgEl.style.display='block';
+        setScore(score+10);setTimeout(gen,1500);
+      }else{
+        btn.classList.add('wrong');setTimeout(()=>btn.classList.remove('wrong'),400);
+        setScore(Math.max(0,score-3));
+      }
+    }
+
+    function init(){score=0;setScore(0);gen()}
+    document.getElementById('next').onclick=gen;
+    init();
+  </script>
+</body>
+</html>

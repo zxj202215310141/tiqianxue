@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>单位换算</title>
+  <style>
+    :root{--bg:#e3f2fd;--card:#ffffff;--accent:#90caf9;--accent2:#0d47a1;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .question{font-size:28px;font-weight:bold;color:var(--accent2);margin:20px 0;text-align:center}
+    .options{display:flex;flex-wrap:wrap;gap:15px;justify-content:center;margin:20px 0}
+    .opt-btn{width:120px;height:60px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:15px;border:none;font-size:24px;font-weight:bold;color:white;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(13,71,161,0.3)}
+    .opt-btn:active{transform:scale(0.95)}
+    .opt-btn.correct{background:var(--correct)}
+    .opt-btn.wrong{background:var(--wrong)}
+    .btn{background:linear-gradient(135deg,var(--accent2),#1565c0);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(13,71,161,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.question{font-size:22px}.opt-btn{width:100px;height:50px;font-size:20px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🔢 单位换算</h1>
+      <p>常用单位换算：</p>
+      <p style="margin-top:8px">📏 长度：1米 = 10分米，1分米 = 10厘米，1厘米 = 10毫米</p>
+      <p style="margin-top:8px">⚖️ 重量：1吨 = 1000千克，1千克 = 1000克</p>
+      <p style="margin-top:8px">📦 体积：1立方米 = 1000立方分米，1立方分米 = 1000立方厘米</p>
+      <p style="margin-top:8px">🥤 容积：1升 = 1000毫升，1升 = 1立方分米</p>
+      <div style="margin-top:16px;padding:12px;background:#90caf9;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        完成各种单位换算挑战！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🔢 单位换算挑战</h2>
+      <div class="hint">选择正确的答案</div>
+      
+      <div class="question" id="question">1米 = ___ 厘米</div>
+      
+      <div class="options" id="options"></div>
+      
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+      
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questionEl = document.getElementById('question')
+    const optionsEl = document.getElementById('options')
+    const nextBtn = document.getElementById('next')
+    const resetBtn = document.getElementById('reset')
+    const scoreEl = document.getElementById('scoreVal')
+    const messageEl = document.getElementById('message')
+    
+    let score = 0
+    let currentAnswer = ''
+    
+    const questions = [
+      { text: '1米 = ___ 厘米', options: ['10', '100', '1000', '10000'], answer: '100' },
+      { text: '1分米 = ___ 厘米', options: ['1', '10', '100', '1000'], answer: '10' },
+      { text: '1厘米 = ___ 毫米', options: ['1', '10', '100', '1000'], answer: '10' },
+      { text: '1千米 = ___ 米', options: ['100', '1000', '10000', '100000'], answer: '1000' },
+      { text: '1千克 = ___ 克', options: ['10', '100', '1000', '10000'], answer: '1000' },
+      { text: '1吨 = ___ 千克', options: ['100', '1000', '10000', '100000'], answer: '1000' },
+      { text: '1立方米 = ___ 立方分米', options: ['100', '1000', '10000', '100000'], answer: '1000' },
+      { text: '1立方分米 = ___ 立方厘米', options: ['100', '1000', '10000', '100000'], answer: '1000' },
+      { text: '1升 = ___ 毫升', options: ['100', '1000', '10000', '100000'], answer: '1000' },
+      { text: '2米 = ___ 分米', options: ['2', '20', '200', '2000'], answer: '20' },
+      { text: '5厘米 = ___ 毫米', options: ['5', '50', '500', '5000'], answer: '50' },
+      { text: '3千克 = ___ 克', options: ['30', '300', '3000', '30000'], answer: '3000' },
+      { text: '2吨 = ___ 千克', options: ['200', '2000', '20000', '200000'], answer: '2000' },
+      { text: '4升 = ___ 毫升', options: ['400', '4000', '40000', '400000'], answer: '4000' },
+      { text: '50厘米 = ___ 分米', options: ['5', '50', '500', '5000'], answer: '5' },
+      { text: '80毫米 = ___ 厘米', options: ['8', '80', '800', '8000'], answer: '8' },
+      { text: '6000克 = ___ 千克', options: ['6', '60', '600', '6000'], answer: '6' },
+      { text: '7000千克 = ___ 吨', options: ['7', '70', '700', '7000'], answer: '7' },
+      { text: '9000毫升 = ___ 升', options: ['9', '90', '900', '9000'], answer: '9' },
+      { text: '100厘米 = ___ 米', options: ['1', '10', '100', '1000'], answer: '1' }
+    ]
+    
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+    
+    function generateQuestion() {
+      const index = Math.floor(Math.random() * questions.length)
+      const q = questions[index]
+      currentAnswer = q.answer
+      
+      questionEl.textContent = q.text
+      messageEl.style.display = 'none'
+      
+      optionsEl.innerHTML = ''
+      q.options.forEach(opt => {
+        const btn = document.createElement('button')
+        btn.className = 'opt-btn'
+        btn.textContent = opt
+        btn.addEventListener('click', () => {
+          if (opt === currentAnswer) {
+            btn.classList.add('correct')
+            messageEl.textContent = '✅ 正确！太棒了！'
+            messageEl.style.color = 'var(--correct)'
+            messageEl.style.display = 'block'
+            setScore(score + 10)
+          } else {
+            btn.classList.add('wrong')
+            messageEl.textContent = '❌ 不对哦，正确答案是 ' + currentAnswer + '！'
+            messageEl.style.color = 'var(--wrong)'
+            messageEl.style.display = 'block'
+          }
+        })
+        optionsEl.appendChild(btn)
+      })
+    }
+    
+    function init() {
+      score = 0
+      setScore(0)
+      generateQuestion()
+    }
+    
+    nextBtn.addEventListener('click', generateQuestion)
+    resetBtn.addEventListener('click', init)
+    init()
+  </script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>棋类游戏</title>
+  <style>
+    :root{--bg:#eceff1;--card:#ffffff;--accent:#b0bec5;--accent2:#37474f;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .board{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:16px 0;background:#263238;padding:8px;border-radius:12px}
+    .b-cell{width:55px;height:55px;background:#37474f;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer;transition:all 0.3s}
+    .b-cell:hover{background:#455a64}
+    .b-cell.player{background:linear-gradient(135deg,#e53935,#ef5350);color:white;box-shadow:0 0 8px rgba(229,57,53,0.5)}
+    .b-cell.ai{background:linear-gradient(135deg,#1e88e5,#42a5f5);color:white;box-shadow:0 0 8px rgba(30,136,229,0.5)}
+    .b-cell.win{animation:pulse 0.6s infinite}
+    .info-bar{display:flex;gap:20px;margin:8px 0;align-items:center}
+    .turn-indicator{font-size:18px;font-weight:bold;padding:6px 16px;border-radius:8px}
+    .turn-indicator.your{background:#ffebee;color:#e53935}
+    .turn-indicator.ai{background:#e3f2fd;color:#1e88e5}
+    .btn{background:linear-gradient(135deg,var(--accent2),#546e7a);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(55,71,79,0.3)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:12px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.12)}100%{transform:scale(1)}}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.b-cell{width:45px;height:45px;font-size:24px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>♟️ 棋类游戏</h1>
+      <p>数学棋类游戏将<strong>数字运算</strong>和<strong>策略思维</strong>融入棋盘对弈中，既有趣味性又能锻炼数学能力。</p>
+      <p style="margin-top:8px">🎯 常见的数学棋类：<br>• <strong>数独棋</strong>：在棋盘上填入数字满足规则<br>• <strong>运算棋</strong>：移动棋子触发加减乘除运算<br>• <strong>倍数棋</strong>：走到目标数字的倍数位置得分</p>
+      <p style="margin-top:8px">💡 下棋过程中需要：提前思考、计算步数、预测对手走法，锻炼<strong>逻辑推理</strong>和<strong>策略规划</strong>能力。</p>
+      <div style="margin-top:16px;padding:12px;background:#cfd8dc;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        <strong>数字五子棋</strong>：你和电脑轮流落子，先连成5个一行的获胜！棋盘格中显示数字，代表该位置的"数值"。
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>♟️ 数字五子棋</h2>
+      <div class="hint">先连成5子一线者获胜！（你：🔴 红子，电脑：🔵 蓝子）</div>
+      <div class="info-bar">
+        <div class="turn-indicator your" id="turnIndicator">🔴 你的回合</div>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      <div class="board" id="board"></div>
+      <div class="row">
+        <button id="restart" class="btn">🔄 重新开始</button>
+      </div>
+      <div id="msg" style="margin-top:12px;font-weight:bold;font-size:20px;display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const boardEl=document.getElementById('board'),scoreEl=document.getElementById('scoreVal'),
+      turnEl=document.getElementById('turnIndicator'),msgEl=document.getElementById('msg');
+    const SIZE=5;
+    let board=[],score=0,gameOver=false,playerTurn=true;
+
+    function setScore(v){score=v;scoreEl.textContent=score}
+
+    function initBoard(){
+      board=[];gameOver=false;playerTurn=true;
+      for(let r=0;r<SIZE;r++){board[r]=[];for(let c=0;c<SIZE;c++)board[r][c]=null}
+      renderBoard();updateTurn();msgEl.style.display='none';
+    }
+
+    function renderBoard(){
+      boardEl.innerHTML='';
+      for(let r=0;r<SIZE;r++){
+        for(let c=0;c<SIZE;c++){
+          const cell=document.createElement('div');cell.className='b-cell';
+          if(board[r][c]==='P')cell.classList.add('player');
+          else if(board[r][c]==='A')cell.classList.add('ai');
+          cell.textContent=board[r][c]? (board[r][c]==='P'?'●':'●') : (r*SIZE+c+1);
+          if(!board[r][c])cell.style.color='#607d8b';
+          cell.addEventListener('click',()=>playerMove(r,c,cell));
+          boardEl.appendChild(cell);
+        }
+      }
+    }
+
+    function updateTurn(){
+      turnEl.textContent=playerTurn?'🔴 你的回合':'🔵 电脑思考中...';
+      turnEl.className='turn-indicator '+(playerTurn?'your':'ai');
+    }
+
+    function checkWin(player){
+      const p=player;
+      for(let r=0;r<SIZE;r++){let cnt=0;for(let c=0;c<SIZE;c++){cnt=board[r][c]===p?cnt+1:0;if(cnt>=5)return true}}
+      for(let c=0;c<SIZE;c++){let cnt=0;for(let r=0;r<SIZE;r++){cnt=board[r][c]===p?cnt+1:0;if(cnt>=5)return true}}
+      for(let d=-(SIZE-1);d<SIZE;d++){let cnt1=0,cnt2=0;for(let i=0;i<SIZE;i++){const r1=i,c1=i+d;const r2=i,c2=SIZE-1-i-d;if(c1>=0&&c1<SIZE){cnt1=board[r1][c1]===p?cnt1+1:0;if(cnt1>=5)return true}if(c2>=0&&c2<SIZE){cnt2=board[r2][c2]===p?cnt2+1:0;if(cnt2>=5)return true}}}
+      return false;
+    }
+
+    function isFull(){for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)if(!board[r][c])return false;return true}
+
+    function playerMove(r,c,cell){
+      if(gameOver||!playerTurn||board[r][c])return;
+      board[r][c]='P';renderBoard();
+      if(checkWin('P')){gameOver=true;setScore(score+50);msgEl.textContent='🎉 恭喜你赢了！五子连线！';msgEl.style.color='var(--correct)';msgEl.style.display='block';return}
+      if(isFull()){gameOver=true;msgEl.textContent='🤝 平局！';msgEl.style.color='#666';msgEl.style.display='block';return}
+      playerTurn=false;updateTurn();setTimeout(aiMove,600);
+    }
+
+    function aiMove(){
+      if(gameOver)return;
+      const empty=[];for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)if(!board[r][c])empty.push([r,c]);
+      if(!empty.length)return;
+      const [r,c]=empty[Math.floor(Math.random()*empty.length)];
+      board[r][c]='A';renderBoard();
+      if(checkWin('A')){gameOver=true;msgEl.textContent='😔 电脑赢了！再接再厉！';msgEl.style.color='var(--wrong)';msgEl.style.display='block';setScore(Math.max(0,score-10));return}
+      if(isFull()){gameOver=true;msgEl.textContent='🤝 平局！';msgEl.style.color='#666';msgEl.style.display='block';return}
+      playerTurn=true;updateTurn();
+    }
+
+    function init(){score=0;setScore(0);initBoard()}
+    document.getElementById('restart').onclick=init;
+    init();
+  </script>
+</body>
+</html>

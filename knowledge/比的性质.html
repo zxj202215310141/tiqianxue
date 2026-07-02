@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>比的性质</title>
+  <style>
+    :root{--bg:#e8f5e9;--card:#ffffff;--accent:#a5d6a7;--accent2:#1b5e20;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .question{font-size:26px;font-weight:bold;color:var(--accent2);margin:20px 0;text-align:center}
+    .options{display:flex;flex-wrap:wrap;gap:15px;justify-content:center;margin:20px 0}
+    .opt-btn{min-width:150px;padding:10px 20px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:15px;border:none;font-size:20px;font-weight:bold;color:white;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(27,94,32,0.3)}
+    .opt-btn:active{transform:scale(0.95)}
+    .opt-btn.correct{background:var(--correct)}
+    .opt-btn.wrong{background:var(--wrong)}
+    .btn{background:linear-gradient(135deg,var(--accent2),#388e3c);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(27,94,32,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.question{font-size:22px}.opt-btn{min-width:130px;font-size:18px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>⚖️ 比的性质</h1>
+      <p>比的前项和后项同时乘或除以相同的数（0除外），比值不变。这叫做<strong>比的基本性质</strong>。</p>
+      <p style="margin-top:8px">💡 如果 a:b 是一个比，那么 a×k : b×k = a:b（k≠0），同样 a÷k : b÷k = a:b（k≠0）。</p>
+      <p style="margin-top:8px">🔢 例如：6:8 = (6÷2):(8÷2) = 3:4，或者 3:4 = (3×3):(4×3) = 9:12。</p>
+      <p style="margin-top:8px">📝 利用比的基本性质，可以把比化成最简单的整数比。</p>
+      <div style="margin-top:16px;padding:12px;background:#a5d6a7;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        判断变形后的比是否等于原比！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>⚖️ 比的性质挑战</h2>
+      <div class="hint">选择正确的答案</div>
+
+      <div class="question" id="question"></div>
+
+      <div class="options" id="options"></div>
+
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questionEl = document.getElementById('question')
+    const optionsEl = document.getElementById('options')
+    const nextBtn = document.getElementById('next')
+    const resetBtn = document.getElementById('reset')
+    const scoreEl = document.getElementById('scoreVal')
+    const messageEl = document.getElementById('message')
+
+    let score = 0
+    let currentAnswer = ''
+
+    const questions = [
+      { text: '下面哪个比等于 3:4？', options: ['6:8', '5:8', '3:6', '6:4'], answer: '6:8' },
+      { text: '下面哪个比等于 2:5？', options: ['2:10', '6:15', '10:4', '3:5'], answer: '6:15' },
+      { text: '下面哪个比不等于 10:15？', options: ['2:3', '20:30', '30:45', '5:10'], answer: '5:10' },
+      { text: '把 8:12 的前后项同时除以4，得到？', options: ['2:3', '4:3', '2:8', '1:4'], answer: '2:3' },
+      { text: '下面哪个比等于 5:7？', options: ['10:14', '15:28', '7:5', '5:14'], answer: '10:14' },
+      { text: '下面哪个比不等于 4:6？', options: ['2:3', '8:12', '12:18', '3:4'], answer: '3:4' },
+      { text: '把 15:25 的前后项同时除以5，得到？', options: ['5:5', '3:5', '10:20', '3:4'], answer: '3:5' },
+      { text: '下面哪个比等于 9:15？', options: ['3:5', '18:45', '3:8', '5:3'], answer: '3:5' },
+      { text: '下面哪个比不等于 12:16？', options: ['3:4', '6:8', '24:32', '4:6'], answer: '4:6' },
+      { text: '把 20:30 的前后项同时除以10，得到？', options: ['10:20', '2:3', '4:6', '1:2'], answer: '2:3' },
+      { text: '下面哪个比等于 7:14？', options: ['1:2', '2:3', '14:7', '1:7'], answer: '1:2' },
+      { text: '下面哪个比不等于 6:9？', options: ['2:3', '12:18', '18:27', '3:2'], answer: '3:2' }
+    ]
+
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+
+    function generateQuestion() {
+      const index = Math.floor(Math.random() * questions.length)
+      const q = questions[index]
+      currentAnswer = q.answer
+
+      questionEl.textContent = q.text
+      messageEl.style.display = 'none'
+
+      optionsEl.innerHTML = ''
+      q.options.forEach(opt => {
+        const btn = document.createElement('button')
+        btn.className = 'opt-btn'
+        btn.textContent = opt
+        btn.addEventListener('click', () => {
+          if (opt === currentAnswer) {
+            btn.classList.add('correct')
+            messageEl.textContent = '✅ 正确！太棒了！'
+            messageEl.style.color = 'var(--correct)'
+            messageEl.style.display = 'block'
+            setScore(score + 10)
+          } else {
+            btn.classList.add('wrong')
+            messageEl.textContent = '❌ 不对哦，正确答案是 ' + currentAnswer
+            messageEl.style.color = 'var(--wrong)'
+            messageEl.style.display = 'block'
+          }
+        })
+        optionsEl.appendChild(btn)
+      })
+    }
+
+    function init() {
+      score = 0
+      setScore(0)
+      generateQuestion()
+    }
+
+    nextBtn.addEventListener('click', generateQuestion)
+    resetBtn.addEventListener('click', init)
+    init()
+  </script>
+</body>
+</html>

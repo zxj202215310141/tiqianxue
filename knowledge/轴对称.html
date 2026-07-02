@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>轴对称</title>
+  <style>
+    :root{--bg:#fce4ec;--card:#ffffff;--accent:#f48fb1;--accent2:#e91e63;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .mirror-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:16px 0;position:relative}
+    .m-cell{width:42px;height:42px;border-radius:4px;background:#f5f5f5;border:1px solid #e0e0e0;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center}
+    .m-cell.filled{background:var(--accent2);border-color:var(--accent2)}
+    .m-cell.mirror-filled{background:#ce93d8;border-color:#ce93d8}
+    .m-cell.mirror-line{background:#ffe0b2;border:none;cursor:default;font-size:10px;color:#e65100}
+    .m-cell.user-filled{background:var(--correct);border-color:var(--correct);animation:pulse 0.5s}
+    .m-cell.user-wrong{background:var(--wrong);border-color:var(--wrong);animation:shake 0.4s}
+    .options-panel{display:flex;flex-wrap:wrap;gap:12px;margin:12px 0;justify-content:center}
+    .opt-card{width:100px;padding:12px 8px;border:3px solid #e0e0e0;border-radius:12px;background:white;cursor:pointer;text-align:center;font-size:14px;font-weight:bold;transition:all 0.3s}
+    .opt-card:hover{border-color:var(--accent2);transform:translateY(-2px)}
+    .opt-card.correct{border-color:var(--correct);background:var(--correct);color:white}
+    .opt-card.wrong{border-color:var(--wrong);background:var(--wrong);color:white}
+    .btn{background:linear-gradient(135deg,var(--accent2),#f06292);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(233,30,99,0.3)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:12px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.m-cell{width:34px;height:34px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🪞 轴对称</h1>
+      <p>如果一个图形沿着一条直线对折后，两侧的图形能够<strong>完全重合</strong>，这个图形就是<strong>轴对称图形</strong>，这条直线叫做<strong>对称轴</strong>。</p>
+      <p style="margin-top:8px">📐 轴对称图形的特点：对称轴两侧的图形<strong>形状相同、大小相等、方向相反</strong>，对应点到对称轴的距离相等。</p>
+      <p style="margin-top:8px">💡 生活中轴对称的例子：蝴蝶翅膀、人脸、树叶、剪纸、故宫建筑等。</p>
+      <div style="margin-top:16px;padding:12px;background:#f8bbd0;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        左边格子中有一半图形（彩色区域），中间竖线为对称轴。请在右边的镜像位置点击，补全另一半轴对称图形！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🪞 轴对称补全</h2>
+      <div class="hint">点击右侧格子补全轴对称图形（橙色线为对称轴）</div>
+      <div class="mirror-grid" id="mirrorGrid"></div>
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      <div id="msg" style="margin-top:12px;font-weight:bold;font-size:20px;display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const gridEl=document.getElementById('mirrorGrid'),scoreEl=document.getElementById('scoreVal'),msgEl=document.getElementById('msg');
+    let score=0,locked=false,correctCount=0,totalNeeded=0;
+    const ROWS=7,COLS=7,MID=3;
+
+    function setScore(v){score=v;scoreEl.textContent=score}
+
+    function gen(){
+      locked=false;correctCount=0;msgEl.style.display='none';
+      const filledCells=new Set();
+      const count=3+Math.floor(Math.random()*4);
+      totalNeeded=0;
+      for(let i=0;i<count;i++){
+        const r=Math.floor(Math.random()*ROWS),c=Math.floor(Math.random()*MID);
+        if(!filledCells.has(r+','+c)){filledCells.add(r+','+c)}
+      }
+      totalNeeded=filledCells.size;
+      gridEl.innerHTML='';
+      for(let r=0;r<ROWS;r++){
+        for(let c=0;c<COLS;c++){
+          const cell=document.createElement('div');
+          cell.className='m-cell';cell.dataset.r=r;cell.dataset.c=c;
+          if(c===MID){cell.classList.add('mirror-line');cell.textContent='‖'}
+          else if(filledCells.has(r+','+c)){cell.classList.add('filled')}
+          else if(c>MID){
+            const mirrorC=MID-(c-MID);
+            if(filledCells.has(r+','+mirrorC)){cell.classList.add('mirror-filled')}
+          }
+          if(c>MID && c!==MID && !filledCells.has(r+','+c)){
+            cell.addEventListener('click',()=>handleClick(r,c,cell));
+          }
+          gridEl.appendChild(cell);
+        }
+      }
+    }
+
+    function handleClick(r,c,cell){
+      if(locked || c<=MID)return;
+      const mirrorC=MID-(c-MID);
+      const isMirror=gridEl.querySelector(`[data-r="${r}"][data-c="${mirrorC}"]`)?.classList.contains('filled');
+      if(isMirror && !cell.classList.contains('user-filled')){
+        cell.classList.add('user-filled');cell.textContent='✓';
+        correctCount++;
+        setScore(score+10);
+        if(correctCount>=totalNeeded){
+          locked=true;
+          msgEl.textContent='🎉 太棒了！你完美地补全了轴对称图形！';
+          msgEl.style.color='var(--correct)';msgEl.style.display='block';
+          setTimeout(gen,1500);
+        }
+      }else if(!isMirror && !cell.classList.contains('user-wrong')){
+        cell.classList.add('user-wrong');
+        setTimeout(()=>{cell.classList.remove('user-wrong')},400);
+        setScore(Math.max(0,score-3));
+      }
+    }
+
+    function init(){score=0;setScore(0);gen()}
+    document.getElementById('next').onclick=gen;
+    init();
+  </script>
+</body>
+</html>

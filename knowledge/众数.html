@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>众数</title>
+  <style>
+    :root{--bg:#fff3e0;--card:#ffffff;--accent:#ffcc80;--accent2:#e65100;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .frequency-chart{display:flex;gap:6px;margin:16px 0;align-items:flex-end;justify-content:center;flex-wrap:wrap}
+    .freq-col{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:all 0.3s}
+    .freq-bar{width:50px;background:linear-gradient(180deg,var(--accent2),#ff9800);border-radius:8px 8px 0 0;transition:height 0.5s;display:flex;align-items:flex-start;justify-content:center;color:white;font-weight:bold;padding-top:4px;font-size:14px}
+    .freq-col:hover .freq-bar{filter:brightness(1.2);transform:scaleY(1.05);transform-origin:bottom}
+    .freq-col.mode .freq-bar{background:linear-gradient(180deg,#ff1744,#ff5252);animation:pulse 0.8s infinite}
+    .freq-col.mode .freq-label{color:#ff1744;font-weight:bold}
+    .freq-label{font-size:14px;color:#666;font-weight:bold}
+    .question-box{font-size:18px;font-weight:bold;color:var(--accent2);margin:12px 0;text-align:center}
+    .options-row{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0;justify-content:center}
+    .opt-btn{width:90px;padding:10px;border:3px solid #e0e0e0;border-radius:12px;background:white;font-size:16px;font-weight:bold;cursor:pointer;transition:all 0.3s}
+    .opt-btn:hover{border-color:var(--accent2);background:#fff3e0;transform:translateY(-2px)}
+    .opt-btn.correct{border-color:var(--correct);background:var(--correct);color:white;animation:pulse 0.5s}
+    .opt-btn.wrong{border-color:var(--wrong);background:var(--wrong);color:white;animation:shake 0.4s}
+    .btn{background:linear-gradient(135deg,var(--accent2),#ff9800);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(230,81,0,0.3)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:12px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.freq-bar{width:40px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🔢 众数</h1>
+      <p>众数是一组数据中出现<strong>次数最多</strong>的数。一组数据可以有<strong>一个众数、多个众数，也可能没有众数</strong>。</p>
+      <p style="margin-top:8px">📐 特点：<br>① 众数反映数据的<strong>集中趋势</strong><br>② 不受极端值影响<br>③ 在投票、服装尺码等场景中很有用</p>
+      <p style="margin-top:8px">💡 例如：[2, 3, 3, 5, 7] 的众数是 <strong>3</strong>（出现2次最多）<br>[1, 1, 2, 2, 3] 有<strong>两个众数</strong>：1和2</p>
+      <div style="margin-top:16px;padding:12px;background:#ffe0b2;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        观察频率分布图，找出出现次数最多的数据（众数）并点击正确答案！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🔢 众数大侦探</h2>
+      <div class="hint">找出出现次数最多的数字（最高的柱子）</div>
+      <div class="frequency-chart" id="freqChart"></div>
+      <div class="question-box">出现次数最多的数字是？（众数）</div>
+      <div class="options-row" id="optionsRow"></div>
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      <div id="msg" style="margin-top:12px;font-weight:bold;font-size:20px;display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const freqChart=document.getElementById('freqChart'),optionsRow=document.getElementById('optionsRow'),
+      scoreEl=document.getElementById('scoreVal'),msgEl=document.getElementById('msg');
+    let score=0,locked=false,currentAnswer=null;
+
+    function setScore(v){score=v;scoreEl.textContent=score}
+    function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+    function gen(){
+      locked=false;msgEl.style.display='none';
+      const used=new Set();
+      const dataCount=8+Math.floor(Math.random()*8);
+      const data=[];
+      while(data.length<dataCount){
+        const v=1+Math.floor(Math.random()*15);data.push(v);used.add(v);
+      }
+      const freq={};data.forEach(v=>{freq[v]=(freq[v]||0)+1});
+      const maxFreq=Math.max(...Object.values(freq));
+      const modes=Object.keys(freq).filter(k=>freq[k]===maxFreq).map(Number);
+      currentAnswer=modes.sort((a,b)=>a-b);
+
+      freqChart.innerHTML='';
+      const entries=Object.entries(freq).sort((a,b)=>Number(a[0])-Number(b[0]));
+      entries.forEach(([val,count])=>{
+        const col=document.createElement('div');col.className='freq-col';
+        if(modes.includes(Number(val)))col.classList.add('mode');
+        const bar=document.createElement('div');bar.className='freq-bar';
+        bar.style.height=(count/maxFreq*120+20)+'px';bar.textContent=count+'次';
+        const lbl=document.createElement('div');lbl.className='freq-label';lbl.textContent=val;
+        col.appendChild(bar);col.appendChild(lbl);freqChart.appendChild(col);
+      });
+
+      optionsRow.innerHTML='';
+      const correctStr=currentAnswer.join(' 和 ');
+      const distractors=[];
+      const allVals=Object.keys(freq).map(Number);
+      for(let i=0;i<4;i++){
+        const d=allVals[Math.floor(Math.random()*allVals.length)];
+        if(d!==currentAnswer[0] && !distractors.includes(String(d)))distractors.push(String(d));
+      }
+      const opts=shuffle([correctStr,...distractors.slice(0,3)]);
+      while(opts.length<4)opts.push(String(allVals[Math.floor(Math.random()*allVals.length)]));
+      const unique=[...new Set(opts)].slice(0,4);
+      unique.forEach(v=>{
+        const btn=document.createElement('button');btn.className='opt-btn';
+        btn.textContent=v;btn.style.width='auto';btn.style.padding='10px 16px';
+        btn.addEventListener('click',()=>handleAnswer(v,btn));optionsRow.appendChild(btn);
+      });
+    }
+
+    function handleAnswer(val,btn){
+      if(locked)return;
+      const correctStr=currentAnswer.join(' 和 ');
+      if(val===correctStr){
+        btn.classList.add('correct');locked=true;
+        msgEl.textContent='✅ 正确！众数是 '+correctStr+'（出现次数最多）';
+        msgEl.style.color='var(--correct)';msgEl.style.display='block';
+        setScore(score+10);setTimeout(gen,1500);
+      }else{
+        btn.classList.add('wrong');setTimeout(()=>btn.classList.remove('wrong'),400);
+        setScore(Math.max(0,score-3));
+      }
+    }
+
+    function init(){score=0;setScore(0);gen()}
+    document.getElementById('next').onclick=gen;
+    init();
+  </script>
+</body>
+</html>

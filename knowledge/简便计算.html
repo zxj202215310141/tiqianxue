@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>简便计算</title>
+  <style>
+    :root{--bg:#ede7f6;--card:#ffffff;--accent:#b39ddb;--accent2:#311b92;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .question{font-size:22px;font-weight:bold;color:var(--accent2);margin:20px 0;text-align:center}
+    .options{display:flex;flex-wrap:wrap;gap:15px;justify-content:center;margin:20px 0}
+    .opt-btn{min-width:120px;padding:10px 20px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:15px;border:none;font-size:22px;font-weight:bold;color:white;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(49,27,146,0.3)}
+    .opt-btn:active{transform:scale(0.95)}.opt-btn.correct{background:var(--correct)}.opt-btn.wrong{background:var(--wrong)}
+    .btn{background:linear-gradient(135deg,var(--accent2),#4527a0);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer}
+    .btn:active{transform:scale(0.95)}.row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}.hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.question{font-size:18px}.opt-btn{min-width:100px;font-size:20px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>⚡ 简便计算</h1>
+      <p>运用<strong>运算定律</strong>和<strong>数的特点</strong>，使复杂的计算变得简单的方法。</p>
+      <p style="margin-top:8px">💡 常用技巧：
+        <br>① <strong>凑整法</strong>：25×4=100, 125×8=1000
+        <br>② <strong>拆分法</strong>：99×8=(100-1)×8
+        <br>③ <strong>提取公因数</strong>：36×7+64×7=(36+64)×7</p>
+      <p style="margin-top:8px">🔢 例如：25×32 = 25×4×8 = 100×8 = 800。</p>
+      <div style="margin-top:16px;padding:12px;background:#b39ddb;border-radius:10px"><strong>🎮 游戏说明：</strong><br>选择简便计算的结果！</div>
+    </div>
+    <div class="card game">
+      <h2>⚡ 简便计算挑战</h2>
+      <div class="hint">用简便方法计算</div>
+      <div class="question" id="question"></div>
+      <div class="options" id="options"></div>
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const questionEl=document.getElementById('question'),optionsEl=document.getElementById('options');
+    const nextBtn=document.getElementById('next'),resetBtn=document.getElementById('reset');
+    const scoreEl=document.getElementById('scoreVal'),messageEl=document.getElementById('message');
+    let score=0,currentAnswer='';
+    const questions=[
+      {text:'25×4 = ？',options:['100','50','75','125'],answer:'100'},
+      {text:'125×8 = ？',options:['800','1000','1200','1500'],answer:'1000'},
+      {text:'99×8 简便计算等于？',options:['792','800','792-8','808'],answer:'792'},
+      {text:'36×7+64×7 = ？',options:['700','630','560','770'],answer:'700'},
+      {text:'25×32 = ？',options:['600','700','800','900'],answer:'800'},
+      {text:'45×102 = ？',options:['4500','4590','4545','4600'],answer:'4590'},
+      {text:'简便计算核心思路是？',options:['硬算','凑整','猜答案','用计算器'],answer:'凑整'},
+      {text:'78+199 = ？',options:['277','267','287','297'],answer:'277'},
+      {text:'560÷35 = ？',options:['14','16','18','20'],answer:'16'},
+      {text:'25×24 怎么简便？',options:['25×20+25×4','25×30-6','24×25','直接乘'],answer:'25×20+25×4'},
+      {text:'137+98 = ？',options:['225','235','245','215'],answer:'235'},
+      {text:'提取公因数的根据是？',options:['加法交换律','乘法分配律','乘法交换律','加法结合律'],answer:'乘法分配律'}
+    ];
+    function setScore(v){score=v;scoreEl.textContent=score}
+    function generateQuestion(){
+      const idx=Math.floor(Math.random()*questions.length),q=questions[idx];currentAnswer=q.answer;
+      questionEl.textContent=q.text;messageEl.style.display='none';optionsEl.innerHTML='';
+      q.options.forEach(opt=>{
+        const btn=document.createElement('button');btn.className='opt-btn';btn.textContent=opt;
+        btn.addEventListener('click',()=>{
+          if(opt===currentAnswer){btn.classList.add('correct');messageEl.textContent='✅ 正确！';messageEl.style.color='var(--correct)';messageEl.style.display='block';setScore(score+10)}
+          else{btn.classList.add('wrong');messageEl.textContent='❌ 答案是 '+currentAnswer;messageEl.style.color='var(--wrong)';messageEl.style.display='block'}
+        });optionsEl.appendChild(btn);
+      });
+    }
+    function init(){score=0;setScore(0);generateQuestion()}
+    nextBtn.addEventListener('click',generateQuestion);resetBtn.addEventListener('click',init);init();
+  </script>
+</body>
+</html>

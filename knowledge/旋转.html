@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>旋转</title>
+  <style>
+    :root{--bg:#e3f2fd;--card:#ffffff;--accent:#90caf9;--accent2:#1e88e5;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .rotation-area{position:relative;width:200px;height:200px;margin:20px 0;display:flex;align-items:center;justify-content:center}
+    .arrow-shape{width:0;height:0;border-left:25px solid transparent;border-right:25px solid transparent;border-bottom:70px solid var(--accent2);position:relative;transition:transform 0.6s cubic-bezier(0.4,0,0.2,1)}
+    .arrow-shape::after{content:'';position:absolute;top:70px;left:-15px;width:30px;height:40px;background:var(--accent2);border-radius:0 0 8px 8px}
+    .options{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0;justify-content:center}
+    .opt-btn{width:120px;padding:12px 8px;border:3px solid #e0e0e0;border-radius:14px;background:white;font-size:16px;font-weight:bold;color:var(--text);cursor:pointer;transition:all 0.3s;text-align:center}
+    .opt-btn:hover{border-color:var(--accent2);background:#e3f2fd;transform:translateY(-2px)}
+    .opt-btn.correct{border-color:var(--correct);background:var(--correct);color:white;animation:pulse 0.5s}
+    .opt-btn.wrong{border-color:var(--wrong);background:var(--wrong);color:white;animation:shake 0.4s}
+    .scene{position:relative;width:200px;height:200px;margin:16px 0;display:flex;align-items:center;justify-content:center;background:#f5f5f5;border-radius:50%;border:3px dashed #bdbdbd}
+    .shape-display{width:80px;height:100px;background:linear-gradient(135deg,var(--accent2),#42a5f5);border-radius:8px;position:relative;transition:transform 0.5s}
+    .shape-display::after{content:'▲';position:absolute;top:-30px;left:50%;transform:translateX(-50%);font-size:30px;color:var(--accent2)}
+    .btn{background:linear-gradient(135deg,var(--accent2),#42a5f5);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(30,136,229,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:12px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🔄 旋转</h1>
+      <p>旋转是指图形绕着一个固定点（<strong>旋转中心</strong>）转动一定的角度。旋转过程中<strong>形状和大小不变</strong>，但方向会改变。</p>
+      <p style="margin-top:8px">📐 旋转的三要素：<strong>旋转中心</strong>（绕哪个点转）、<strong>旋转角度</strong>（90°、180°等）、<strong>旋转方向</strong>（顺时针或逆时针）。</p>
+      <p style="margin-top:8px">💡 生活中旋转的例子：风扇叶片、摩天轮、钟表指针的转动。</p>
+      <div style="margin-top:16px;padding:12px;background:#bbdefb;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        观察左侧的图形，判断它旋转了多少度。点击下方选项选择正确的旋转角度！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🎯 旋转侦探</h2>
+      <div class="hint" id="hintText">这个图形旋转了多少度？</div>
+      <div class="scene">
+        <div class="shape-display" id="shapeDisplay"></div>
+      </div>
+      <div class="options" id="options"></div>
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      <div id="msg" style="margin-top:12px;font-weight:bold;font-size:20px;display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const shapeDisplay=document.getElementById('shapeDisplay'),optionsEl=document.getElementById('options'),
+      scoreEl=document.getElementById('scoreVal'),msgEl=document.getElementById('msg'),
+      hintEl=document.getElementById('hintText');
+    let score=0,locked=false,currentAnswer=null;
+
+    function setScore(v){score=v;scoreEl.textContent=score}
+
+    const angleChoices=[90,180,270,360];
+    const directionNames={90:'顺时针旋转 90°',180:'顺时针旋转 180°',270:'顺时针旋转 270°',360:'旋转 360°（回到原位）'};
+
+    const shapeStyles=[
+      {w:60,h:90,br:'8px',bg:'linear-gradient(135deg,#1e88e5,#42a5f5)',after:''},
+      {w:90,h:60,br:'8px',bg:'linear-gradient(135deg,#43a047,#66bb6a)',after:''},
+      {w:50,h:100,br:'8px 8px 0 0',bg:'linear-gradient(135deg,#e53935,#ef5350)',after:''},
+    ];
+
+    function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+    function gen(){
+      locked=false;msgEl.style.display='none';
+      const shape=shapeStyles[Math.floor(Math.random()*shapeStyles.length)];
+      Object.assign(shapeDisplay.style,{width:shape.w+'px',height:shape.h+'px',borderRadius:shape.br,background:shape.bg,transform:'rotate(0deg)'});
+
+      const angle=angleChoices[Math.floor(Math.random()*angleChoices.length)];
+      currentAnswer=angle;
+      hintEl.textContent='这个图形旋转了多少度？';
+
+      optionsEl.innerHTML='';
+      const opts=shuffle([angle,angleChoices[(angleChoices.indexOf(angle)+1)%4],angleChoices[(angleChoices.indexOf(angle)+2)%4],90]);
+      opts.forEach(a=>{
+        const btn=document.createElement('button');
+        btn.className='opt-btn';
+        btn.textContent=a+'°';
+        btn.addEventListener('click',()=>handleAnswer(a,btn));
+        optionsEl.appendChild(btn);
+      });
+    }
+
+    function handleAnswer(angle,btn){
+      if(locked)return;
+      if(angle===currentAnswer){
+        btn.classList.add('correct');
+        shapeDisplay.style.transform='rotate('+currentAnswer+'deg)';
+        locked=true;
+        msgEl.textContent='✅ 正确！图形'+(currentAnswer===360?'回到了原位':('旋转了'+currentAnswer+'°'));
+        msgEl.style.color='var(--correct)';msgEl.style.display='block';
+        setScore(score+10);
+        setTimeout(gen,1500);
+      }else{
+        btn.classList.add('wrong');
+        setTimeout(()=>btn.classList.remove('wrong'),400);
+        setScore(Math.max(0,score-3));
+        msgEl.textContent='❌ 不对哦，再想想旋转了多少度？';
+        msgEl.style.color='var(--wrong)';msgEl.style.display='block';
+      }
+    }
+
+    function init(){score=0;setScore(0);gen()}
+    document.getElementById('next').onclick=gen;
+    init();
+  </script>
+</body>
+</html>

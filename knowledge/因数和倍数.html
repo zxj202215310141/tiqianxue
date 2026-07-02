@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>因数和倍数</title>
+  <style>
+    :root{--bg:#e8f5e9;--card:#ffffff;--accent:#a5d6a7;--accent2:#1b5e20;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .question{font-size:26px;font-weight:bold;color:var(--accent2);margin:20px 0;text-align:center}
+    .options{display:flex;flex-wrap:wrap;gap:15px;justify-content:center;margin:20px 0}
+    .opt-btn{min-width:150px;padding:10px 20px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:15px;border:none;font-size:20px;font-weight:bold;color:white;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(27,94,32,0.3)}
+    .opt-btn:active{transform:scale(0.95)}
+    .opt-btn.correct{background:var(--correct)}
+    .opt-btn.wrong{background:var(--wrong)}
+    .btn{background:linear-gradient(135deg,var(--accent2),#388e3c);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(27,94,32,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.question{font-size:22px}.opt-btn{min-width:130px;font-size:18px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🔗 因数和倍数</h1>
+      <p>在整数除法中，如果商是整数而没有余数，那么<strong>除数</strong>和<strong>商</strong>都是<strong>被除数的因数</strong>，<strong>被除数</strong>是除数和商的<strong>倍数</strong>。</p>
+      <p style="margin-top:8px">💡 因数和倍数是相互依存的。如：12÷3=4，3和4是12的因数，12是3和4的倍数。</p>
+      <p style="margin-top:8px">🔢 一个数的因数个数是<strong>有限</strong>的，最小是1，最大是它本身。一个数的倍数个数是<strong>无限</strong>的，最小是它本身。</p>
+      <p style="margin-top:8px">📝 注意：讨论因数和倍数时，所说的数一般指非0自然数。</p>
+      <div style="margin-top:16px;padding:12px;background:#a5d6a7;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        判断因数和倍数的关系！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🔗 因数和倍数挑战</h2>
+      <div class="hint">选择正确的答案</div>
+
+      <div class="question" id="question"></div>
+
+      <div class="options" id="options"></div>
+
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questionEl = document.getElementById('question')
+    const optionsEl = document.getElementById('options')
+    const nextBtn = document.getElementById('next')
+    const resetBtn = document.getElementById('reset')
+    const scoreEl = document.getElementById('scoreVal')
+    const messageEl = document.getElementById('message')
+
+    let score = 0
+    let currentAnswer = ''
+
+    const questions = [
+      { text: '下面哪个数是24的因数？', options: ['5', '7', '8', '9'], answer: '8' },
+      { text: '下面哪个数是7的倍数？', options: ['16', '21', '24', '27'], answer: '21' },
+      { text: '36的因数有几个？', options: ['6个', '7个', '8个', '9个'], answer: '9个' },
+      { text: '下面哪个数不是18的因数？', options: ['2', '3', '6', '8'], answer: '8' },
+      { text: '15的倍数最小是？', options: ['0', '1', '15', '30'], answer: '15' },
+      { text: '48÷8=6，下面哪个说法正确？', options: ['8和6是48的因数', '48是8的因数', '6是48的倍数', '48是6的因数'], answer: '8和6是48的因数' },
+      { text: '下面哪个数是6的倍数？', options: ['16', '20', '24', '26'], answer: '24' },
+      { text: '一个数的最大因数是？', options: ['1', '0', '它本身', '无限大'], answer: '它本身' },
+      { text: '一个数的最小倍数是？', options: ['1', '0', '它本身', '无法确定'], answer: '它本身' },
+      { text: '下面哪个数既是16的因数又是16的倍数？', options: ['4', '8', '16', '32'], answer: '16' },
+      { text: '下面哪个数是9的倍数？', options: ['27', '29', '39', '49'], answer: '27' },
+      { text: '如果a÷b=c（a、b、c都是整数且没有余数），那么：', options: ['a是b的因数', 'b是a的倍数', 'b和c是a的因数', 'a是c的因数'], answer: 'b和c是a的因数' }
+    ]
+
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+
+    function generateQuestion() {
+      const index = Math.floor(Math.random() * questions.length)
+      const q = questions[index]
+      currentAnswer = q.answer
+
+      questionEl.textContent = q.text
+      messageEl.style.display = 'none'
+
+      optionsEl.innerHTML = ''
+      q.options.forEach(opt => {
+        const btn = document.createElement('button')
+        btn.className = 'opt-btn'
+        btn.textContent = opt
+        btn.addEventListener('click', () => {
+          if (opt === currentAnswer) {
+            btn.classList.add('correct')
+            messageEl.textContent = '✅ 正确！太棒了！'
+            messageEl.style.color = 'var(--correct)'
+            messageEl.style.display = 'block'
+            setScore(score + 10)
+          } else {
+            btn.classList.add('wrong')
+            messageEl.textContent = '❌ 不对哦，正确答案是 ' + currentAnswer
+            messageEl.style.color = 'var(--wrong)'
+            messageEl.style.display = 'block'
+          }
+        })
+        optionsEl.appendChild(btn)
+      })
+    }
+
+    function init() {
+      score = 0
+      setScore(0)
+      generateQuestion()
+    }
+
+    nextBtn.addEventListener('click', generateQuestion)
+    resetBtn.addEventListener('click', init)
+    init()
+  </script>
+</body>
+</html>

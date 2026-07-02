@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>数学谜题</title>
+  <style>
+    :root{--bg:#ede7f6;--card:#ffffff;--accent:#b39ddb;--accent2:#4527a0;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .riddle-card{background:linear-gradient(135deg,#4527a0,#7c4dff);color:white;padding:20px 24px;border-radius:16px;margin:16px 0;text-align:center;width:100%;min-height:100px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(69,39,160,0.3)}
+    .riddle-text{font-size:20px;line-height:1.6;font-weight:500}
+    .options-row{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0;justify-content:center}
+    .opt-btn{min-width:100px;padding:12px 16px;border:3px solid #e0e0e0;border-radius:14px;background:white;font-size:16px;font-weight:bold;color:var(--text);cursor:pointer;transition:all 0.3s;text-align:center}
+    .opt-btn:hover{border-color:var(--accent2);background:#ede7f6;transform:translateY(-2px)}
+    .opt-btn.correct{border-color:var(--correct);background:var(--correct);color:white;animation:pulse 0.5s}
+    .opt-btn.wrong{border-color:var(--wrong);background:var(--wrong);color:white;animation:shake 0.4s}
+    .hint-box{background:#fff9c4;padding:10px 16px;border-radius:8px;margin:8px 0;font-size:14px;color:#f57f17;text-align:center;cursor:pointer}
+    .hint-box:hover{background:#fff176}
+    .btn{background:linear-gradient(135deg,var(--accent2),#7c4dff);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(69,39,160,0.3)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:12px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    .progress{display:flex;gap:4px;margin:8px 0}
+    .progress-dot{width:10px;height:10px;border-radius:50%;background:#d1c4e9}
+    .progress-dot.solved{background:var(--correct)}
+    @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.riddle-text{font-size:17px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🧩 数学谜题</h1>
+      <p>数学谜题是将数学知识融入趣味问题中的智力挑战，需要<strong>灵活运用数学思维</strong>来解答，而非机械套用公式。</p>
+      <p style="margin-top:8px">🎯 常见类型：<br>• <strong>数字谜</strong>：找出数字间的规律或关系<br>• <strong>逻辑谜</strong>：通过推理分析得出答案<br>• <strong>图形谜</strong>：数图形数量或找图形规律<br>• <strong>生活谜</strong>：用数学解决生活中的趣题</p>
+      <p style="margin-top:8px">💡 解答谜题的秘诀：换个角度思考，画图辅助，从简单情况开始推理。</p>
+      <div style="margin-top:16px;padding:12px;background:#d1c4e9;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        阅读谜题，从选项中选择正确答案。每答对一题获得一颗星。不会的话可以点击获得提示！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🧩 数学谜题挑战</h2>
+      <div class="hint">阅读谜题，选择正确答案（共5题）</div>
+      <div class="progress" id="progress"></div>
+      <div class="riddle-card">
+        <div class="riddle-text" id="riddleText"></div>
+      </div>
+      <div class="hint-box" id="hintBox" style="display:none">💡 提示：点击查看</div>
+      <div class="options-row" id="optionsRow"></div>
+      <div class="row">
+        <button id="skip" class="btn">⏭️ 跳过</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      <div id="msg" style="margin-top:12px;font-weight:bold;font-size:20px;display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const riddleTextEl=document.getElementById('riddleText'),optionsRow=document.getElementById('optionsRow'),
+      hintBox=document.getElementById('hintBox'),progressEl=document.getElementById('progress'),
+      scoreEl=document.getElementById('scoreVal'),msgEl=document.getElementById('msg'),skipBtn=document.getElementById('skip');
+    let score=0,locked=false,currentRiddle=null,solved=0,totalRiddles=0,riddles=[];
+
+    const allRiddles=[
+      {text:'小明今年8岁，哥哥比他大5岁。3年后，哥哥比小明大几岁？',answer:'5岁',opts:['5岁','8岁','13岁','3岁'],hint:'年龄差永远不变，不管过多少年。'},
+      {text:'一根绳子对折3次后，每段长2米。这根绳子原来长多少米？',answer:'16米',opts:['6米','8米','16米','12米'],hint:'对折1次变2段，对折2次变4段，对折3次变8段。'},
+      {text:'鸡和兔子关在一个笼子里，共有8个头、22条腿。请问有多少只鸡？',answer:'5只',opts:['3只','4只','5只','6只'],hint:'如果全是鸡，腿数=8×2=16，比22少6，每只兔子多2条腿。'},
+      {text:'1+2+3+4+5+6+7+8+9+10 = ?',answer:'55',opts:['50','55','60','45'],hint:'首尾相加：(1+10)×5 = 11×5 = 55'},
+      {text:'小明从1楼走到3楼用了6分钟，用同样速度从1楼走到6楼需要多少分钟？',answer:'15分钟',opts:['12分钟','15分钟','18分钟','10分钟'],hint:'1到3楼爬了2层用6分钟，每层3分钟。1到6楼爬5层。'},
+      {text:'小华有若干颗糖，分给5个小朋友每人6颗后还剩3颗。小华原来有多少颗糖？',answer:'33颗',opts:['30颗','33颗','35颗','28颗'],hint:'5个小朋友每人6颗 = 5×6 = 30颗，加上剩下的3颗 = 30+3 = 33颗。'},
+      {text:'用3、5、7三个数字可以组成多少个不同的三位数？',answer:'6个',opts:['3个','6个','9个','12个'],hint:'百位有3种选择，十位有2种，个位有1种：3×2×1=6。'},
+      {text:'一个西瓜切3刀，最多能切成几块？（每刀都切过整个西瓜）',answer:'8块',opts:['6块','7块','8块','9块'],hint:'切3刀时让每两刀都相交，第3刀与前两刀都相交，可切出8块（2³=8）。'},
+    ];
+
+    function setScore(v){score=v;scoreEl.textContent=score}
+    function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+    function gen(){
+      locked=false;msgEl.style.display='none';hintBox.style.display='none';
+      if(riddles.length===0){riddles=shuffle([...allRiddles]);solved=0;totalRiddles=5;updateProgress()}
+      if(solved>=totalRiddles){
+        riddleTextEl.textContent='🎉 恭喜！你完成了所有谜题！';optionsRow.innerHTML='';
+        skipBtn.style.display='none';return;
+      }
+      skipBtn.style.display='inline-block';
+      currentRiddle=riddles.pop();
+      riddleTextEl.textContent=currentRiddle.text;
+      hintBox.textContent='💡 点击查看提示';
+      hintBox.style.display='inline-block';
+      optionsRow.innerHTML='';
+      const opts=shuffle([...currentRiddle.opts]);
+      opts.forEach(v=>{
+        const btn=document.createElement('button');btn.className='opt-btn';btn.textContent=v;
+        btn.addEventListener('click',()=>handleAnswer(v,btn));optionsRow.appendChild(btn);
+      });
+    }
+
+    hintBox.addEventListener('click',()=>{
+      if(currentRiddle)hintBox.textContent='💡 '+currentRiddle.hint;
+    });
+
+    function handleAnswer(val,btn){
+      if(locked||!currentRiddle)return;
+      if(val===currentRiddle.answer){
+        btn.classList.add('correct');locked=true;
+        msgEl.textContent='✅ 正确！'+(currentRiddle.hint?'关键思路：'+currentRiddle.hint:'');
+        msgEl.style.color='var(--correct)';msgEl.style.display='block';
+        setScore(score+20);solved++;updateProgress();
+        setTimeout(gen,2000);
+      }else{
+        btn.classList.add('wrong');setTimeout(()=>btn.classList.remove('wrong'),400);
+        setScore(Math.max(0,score-5));
+      }
+    }
+
+    function updateProgress(){
+      progressEl.innerHTML='';
+      for(let i=0;i<totalRiddles;i++){
+        const dot=document.createElement('div');dot.className='progress-dot'+(i<solved?' solved':'');
+        progressEl.appendChild(dot);
+      }
+    }
+
+    skipBtn.addEventListener('click',()=>{
+      if(locked)return;
+      locked=true;
+      msgEl.textContent='⏭️ 已跳过。答案是：'+currentRiddle.answer;
+      msgEl.style.color='#666';msgEl.style.display='block';
+      setTimeout(()=>{gen()},1500);
+    });
+
+    function init(){score=0;setScore(0);solved=0;totalRiddles=5;riddles=shuffle([...allRiddles]);updateProgress();gen()}
+    init();
+  </script>
+</body>
+</html>

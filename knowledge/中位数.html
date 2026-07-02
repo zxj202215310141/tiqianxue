@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>中位数</title>
+  <style>
+    :root{--bg:#f3e5f5;--card:#ffffff;--accent:#ce93d8;--accent2:#7b1fa2;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .number-line{display:flex;gap:8px;margin:16px 0;flex-wrap:wrap;justify-content:center;align-items:center}
+    .num-card{width:55px;height:55px;background:linear-gradient(135deg,#e1bee7,#ce93d8);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:bold;color:#4a148c;box-shadow:0 3px 8px rgba(0,0,0,0.1);transition:all 0.4s}
+    .num-card.median{background:linear-gradient(135deg,var(--accent2),#aa00ff);color:white;transform:scale(1.15);box-shadow:0 6px 16px rgba(123,31,162,0.5);animation:pulse 0.6s}
+    .sort-btn-row{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap;justify-content:center}
+    .sort-step{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0}
+    .options-row{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0;justify-content:center}
+    .opt-btn{width:90px;padding:10px;border:3px solid #e0e0e0;border-radius:12px;background:white;font-size:16px;font-weight:bold;cursor:pointer;transition:all 0.3s}
+    .opt-btn:hover{border-color:var(--accent2);background:#f3e5f5;transform:translateY(-2px)}
+    .opt-btn.correct{border-color:var(--correct);background:var(--correct);color:white;animation:pulse 0.5s}
+    .opt-btn.wrong{border-color:var(--wrong);background:var(--wrong);color:white;animation:shake 0.4s}
+    .btn{background:linear-gradient(135deg,var(--accent2),#aa00ff);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(123,31,162,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:12px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @keyframes pulse{0%{transform:scale(1.15)}50%{transform:scale(1.25)}100%{transform:scale(1.15)}}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.num-card{width:45px;height:45px;font-size:18px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>📏 中位数</h1>
+      <p>中位数是将一组数据按<strong>从小到大排列</strong>后，位于<strong>中间位置</strong>的数。它不受极端值影响，能较好地反映数据的集中趋势。</p>
+      <p style="margin-top:8px">📐 计算步骤：<br>① 将数据<strong>从小到大排序</strong><br>② 数据个数为<strong>奇数</strong>时：中间那个数就是中位数<br>③ 数据个数为<strong>偶数</strong>时：中间两个数的<strong>平均数</strong>就是中位数</p>
+      <p style="margin-top:8px">💡 例如：[3, 5, 7, 9, 11] 的中位数是 7（中间位置）<br>例如：[2, 4, 6, 8] 的中位数是 (4+6)÷2 = 5</p>
+      <div style="margin-top:16px;padding:12px;background:#e1bee7;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        观察一组打乱的数据，先将它们从小到大排序，再找出中位数并点击正确答案！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>📏 中位数大挑战</h2>
+      <div class="hint">先排序，再找中间的数（或中间两个数的平均）</div>
+      <div class="number-line" id="numberLine">
+        <div style="color:#999;font-size:14px">点击"排序"按钮开始 →</div>
+      </div>
+      <div class="sort-btn-row">
+        <button id="sortBtn" class="btn">📋 排序</button>
+      </div>
+      <div style="text-align:center;font-weight:bold;color:var(--accent2);margin:12px 0">
+        中位数是多少？
+      </div>
+      <div class="options-row" id="optionsRow"></div>
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      <div id="msg" style="margin-top:12px;font-weight:bold;font-size:20px;display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const numberLine=document.getElementById('numberLine'),optionsRow=document.getElementById('optionsRow'),
+      scoreEl=document.getElementById('scoreVal'),msgEl=document.getElementById('msg'),
+      sortBtn=document.getElementById('sortBtn');
+    let score=0,locked=false,currentAnswer=null,data=[],sorted=false;
+
+    function setScore(v){score=v;scoreEl.textContent=score}
+    function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+    function calcMedian(arr){
+      const s=[...arr].sort((a,b)=>a-b);
+      const mid=Math.floor(s.length/2);
+      return s.length%2===1?s[mid]:(s[mid-1]+s[mid])/2;
+    }
+
+    function renderCards(arr,highlightMedian=false){
+      numberLine.innerHTML='';
+      const median=calcMedian(arr);
+      const sorted=[...arr].sort((a,b)=>a-b);
+      sorted.forEach(n=>{
+        const card=document.createElement('div');card.className='num-card';
+        if(highlightMedian){
+          const mid=Math.floor(sorted.length/2);
+          const isMedian=sorted.length%2===1?n===sorted[mid]:(n===sorted[mid-1]||n===sorted[mid]);
+          if(isMedian)card.classList.add('median');
+        }
+        card.textContent=n;numberLine.appendChild(card);
+      });
+    }
+
+    function gen(){
+      locked=false;sorted=false;msgEl.style.display='none';
+      const count=4+Math.floor(Math.random()*3);
+      data=[];const used=new Set();
+      while(data.length<count){const v=1+Math.floor(Math.random()*50);if(!used.has(v)){used.add(v);data.push(v)}}
+      shuffle(data);
+      currentAnswer=calcMedian(data);
+      renderCards(data,false);
+      optionsRow.innerHTML='<div style="color:#999;font-size:14px">请先点击排序</div>';
+      sortBtn.style.display='inline-block';
+    }
+
+    sortBtn.addEventListener('click',()=>{
+      if(sorted)return;
+      sorted=true;
+      data.sort((a,b)=>a-b);
+      renderCards(data,true);
+      sortBtn.style.display='none';
+      const correct=currentAnswer;
+      const opts=shuffle([correct,Math.round((correct+2)*10)/10,Math.round((correct-1)*10)/10,Math.round((correct+4)*10)/10].filter((v,i,a)=>a.indexOf(v)===i));
+      while(opts.length<4){opts.push(correct+opts.length*2-2)}
+      const unique=[...new Set(opts)].slice(0,4);
+      optionsRow.innerHTML='';
+      unique.forEach(v=>{
+        const btn=document.createElement('button');btn.className='opt-btn';btn.textContent=v;
+        btn.addEventListener('click',()=>handleAnswer(v,btn));optionsRow.appendChild(btn);
+      });
+    });
+
+    function handleAnswer(val,btn){
+      if(locked||!sorted)return;
+      if(Math.abs(val-currentAnswer)<0.01){
+        btn.classList.add('correct');locked=true;
+        msgEl.textContent='✅ 正确！中位数是 '+currentAnswer;
+        msgEl.style.color='var(--correct)';msgEl.style.display='block';
+        setScore(score+10);setTimeout(gen,1500);
+      }else{
+        btn.classList.add('wrong');setTimeout(()=>btn.classList.remove('wrong'),400);
+        setScore(Math.max(0,score-3));
+      }
+    }
+
+    function init(){score=0;setScore(0);gen()}
+    document.getElementById('next').onclick=gen;
+    init();
+  </script>
+</body>
+</html>

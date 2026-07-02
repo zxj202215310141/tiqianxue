@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>数字游戏</title>
+  <style>
+    :root{--bg:#fce4ec;--card:#ffffff;--accent:#f48fb1;--accent2:#c2185b;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .number-puzzle{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:16px 0}
+    .pz-cell{width:65px;height:65px;background:linear-gradient(135deg,#fce4ec,#f48fb1);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:bold;color:var(--accent2);cursor:pointer;transition:all 0.3s;border:2px solid var(--accent);box-shadow:0 3px 8px rgba(0,0,0,0.1)}
+    .pz-cell:hover{transform:scale(1.05);box-shadow:0 6px 16px rgba(0,0,0,0.2)}
+    .pz-cell.selected{background:linear-gradient(135deg,var(--accent2),#e91e63);color:white;transform:scale(1.08)}
+    .pz-cell.completed{background:linear-gradient(135deg,var(--correct),#55efc4);color:white}
+    .target-number{font-size:48px;font-weight:bold;color:var(--accent2);margin:16px 0;text-align:center;padding:10px 30px;background:#fce4ec;border:3px dashed var(--accent2);border-radius:16px;min-width:120px}
+    .expression{font-size:22px;font-weight:bold;color:#666;margin:8px 0;text-align:center;min-height:30px}
+    .btn{background:linear-gradient(135deg,var(--accent2),#e91e63);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(194,24,91,0.3)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:12px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.pz-cell{width:55px;height:55px;font-size:22px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🎲 数字游戏</h1>
+      <p>数字游戏是通过数字的排列、组合和运算来锻炼<strong>数感</strong>和<strong>逻辑思维</strong>的趣味活动。</p>
+      <p style="margin-top:8px">🎯 常见的数字游戏类型：<br>• <strong>数独</strong>：在9×9格子中填入1-9<br>• <strong>24点</strong>：用4个数字通过+-×÷得到24<br>• <strong>数字填空</strong>：找出规律填入缺失数字<br>• <strong>数字配对</strong>：找到和为指定值的两个数</p>
+      <div style="margin-top:16px;padding:12px;background:#f8bbd0;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        从下方数字中选择两个数，使它们的和等于目标数字。考验你的口算能力和数感！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🎲 数字配对游戏</h2>
+      <div class="hint">选择两个数字，让它们的和等于目标数</div>
+      <div class="target-number" id="targetNum">10</div>
+      <div class="expression" id="expression"></div>
+      <div class="number-puzzle" id="numberGrid"></div>
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      <div id="msg" style="margin-top:12px;font-weight:bold;font-size:20px;display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const numberGrid=document.getElementById('numberGrid'),targetEl=document.getElementById('targetNum'),
+      exprEl=document.getElementById('expression'),scoreEl=document.getElementById('scoreVal'),msgEl=document.getElementById('msg');
+    let score=0,locked=false,target=0,selected=null,numbers=[];
+
+    function setScore(v){score=v;scoreEl.textContent=score}
+    function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+    function gen(){
+      locked=false;selected=null;msgEl.style.display='none';exprEl.textContent='';
+      target=3+Math.floor(Math.random()*18);
+      targetEl.textContent=target;
+      const pool=new Set();
+      for(let i=1;i<=target-1;i++){
+        if(i<=20)pool.add(i);
+      }
+      const needPair=Math.floor(target/2);
+      const a=1+Math.floor(Math.random()*(needPair-1));
+      const b=target-a;
+      if(a===b||!pool.has(a)||!pool.has(b))return gen();
+      pool.delete(a);pool.delete(b);
+      const others=shuffle([...pool]).slice(0,7);
+      numbers=shuffle([a,b,...others]);
+      renderGrid();
+    }
+
+    function renderGrid(){
+      numberGrid.innerHTML='';
+      numbers.forEach((n,i)=>{
+        const cell=document.createElement('div');cell.className='pz-cell';cell.textContent=n;cell.dataset.idx=i;
+        cell.addEventListener('click',()=>handleSelect(n,i,cell));
+        numberGrid.appendChild(cell);
+      });
+    }
+
+    function handleSelect(n,i,cell){
+      if(locked)return;
+      if(!selected){selected={n,i,cell};cell.classList.add('selected');exprEl.textContent='已选：'+n+' + ? = '+target;return}
+      if(selected.i===i){selected.cell.classList.remove('selected');selected=null;exprEl.textContent='';return}
+
+      if(selected.n+n===target){
+        selected.cell.classList.add('completed');cell.classList.add('completed');
+        locked=true;
+        msgEl.textContent='🎉 正确！'+selected.n+' + '+n+' = '+target;
+        msgEl.style.color='var(--correct)';msgEl.style.display='block';
+        setScore(score+10);setTimeout(gen,1200);
+      }else{
+        cell.classList.add('selected');
+        setTimeout(()=>{cell.classList.remove('selected')},500);
+        setScore(Math.max(0,score-2));
+        msgEl.textContent='❌ '+selected.n+' + '+n+' = '+(selected.n+n)+'，不等于 '+target;
+        msgEl.style.color='var(--wrong)';msgEl.style.display='block';
+        setTimeout(()=>{msgEl.style.display='none'},1000);
+        selected.cell.classList.remove('selected');selected=null;exprEl.textContent='';
+      }
+    }
+
+    function init(){score=0;setScore(0);gen()}
+    document.getElementById('next').onclick=gen;
+    init();
+  </script>
+</body>
+</html>

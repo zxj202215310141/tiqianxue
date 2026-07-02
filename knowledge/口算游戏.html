@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>口算游戏</title>
+  <style>
+    :root{--bg:#e8f5e9;--card:#ffffff;--accent:#a5d6a7;--accent2:#2e7d32;--text:#2d3436;--correct:#00b894;--wrong:#e17055;--timer:#ff6d00}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .timer-bar{width:100%;height:8px;background:#e0e0e0;border-radius:4px;margin:8px 0;overflow:hidden}
+    .timer-fill{height:100%;background:linear-gradient(90deg,var(--timer),#ffab40);border-radius:4px;transition:width 0.1s linear}
+    .question-display{font-size:40px;font-weight:bold;color:var(--accent2);margin:16px 0;text-align:center;padding:16px 24px;background:#e8f5e9;border-radius:12px}
+    .answer-input{width:140px;height:60px;border:4px solid var(--accent2);border-radius:14px;text-align:center;font-size:32px;font-weight:bold;color:var(--accent2);outline:none;margin:8px 0}
+    .answer-input:focus{border-color:#1b5e20;box-shadow:0 0 0 4px rgba(46,125,50,0.2)}
+    .answer-input.correct{border-color:var(--correct);background:var(--correct);color:white}
+    .answer-input.wrong{border-color:var(--wrong);background:var(--wrong);color:white;animation:shake 0.4s}
+    .stats{display:flex;gap:20px;margin:8px 0;justify-content:center}
+    .stat-item{text-align:center}
+    .stat-value{font-size:28px;font-weight:bold;color:var(--accent2)}
+    .stat-label{font-size:12px;color:#999}
+    .btn{background:linear-gradient(135deg,var(--accent2),#43a047);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(46,125,50,0.3)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:12px;align-items:center}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.question-display{font-size:30px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>⚡ 口算游戏</h1>
+      <p>口算是<strong>不借助计算工具</strong>，直接通过大脑计算出结果的方法。它是学好数学的重要基本功，能大大提升计算速度和数感。</p>
+      <p style="margin-top:8px">🎯 口算技巧：<br>• <strong>凑整法</strong>：先凑成整十整百再计算<br>• <strong>分解法</strong>：把一个数拆成两部分分别算<br>• <strong>互补法</strong>：利用互为补数的关系快速算</p>
+      <p style="margin-top:8px">💡 每天坚持5分钟口算练习，计算能力会有显著提升！</p>
+      <div style="margin-top:16px;padding:12px;background:#c8e6c9;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        限时口算挑战！输入答案后按回车键提交，在时间内尽可能多答对题目！每次计时8秒。
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>⚡ 限时口算挑战</h2>
+      <div class="hint">输入答案后按回车键提交（限时8秒）</div>
+      <div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%"></div></div>
+      <div class="question-display" id="question"></div>
+      <input type="number" class="answer-input" id="answerInput" placeholder="?" autofocus>
+      <div class="stats">
+        <div class="stat-item"><div class="stat-value" id="correctCount">0</div><div class="stat-label">✅ 正确</div></div>
+        <div class="stat-item"><div class="stat-value" id="totalCount">0</div><div class="stat-label">📝 总题</div></div>
+        <div class="stat-item"><div class="stat-value" id="streakCount">0</div><div class="stat-label">🔥 连对</div></div>
+      </div>
+      <div class="row">
+        <button id="restart" class="btn">🔄 重新开始</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      <div id="msg" style="margin-top:12px;font-weight:bold;font-size:18px;display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const questionEl=document.getElementById('question'),answerInput=document.getElementById('answerInput'),
+      timerFill=document.getElementById('timerFill'),scoreEl=document.getElementById('scoreVal'),
+      correctCountEl=document.getElementById('correctCount'),totalCountEl=document.getElementById('totalCount'),
+      streakCountEl=document.getElementById('streakCount'),msgEl=document.getElementById('msg');
+    let score=0,correct=0,total=0,streak=0,currentAnswer=null,timeLeft=0,timer=null,gaming=false;
+    const TIME_LIMIT=8;
+
+    function setScore(v){score=v;scoreEl.textContent=score}
+    function updateStats(){correctCountEl.textContent=correct;totalCountEl.textContent=total;streakCountEl.textContent=streak}
+
+    function genQuestion(){
+      const type=Math.floor(Math.random()*4);
+      let a,b,op;
+      switch(type){
+        case 0:a=Math.floor(Math.random()*90)+10;b=Math.floor(Math.random()*50)+1;op='+';currentAnswer=a+b;break;
+        case 1:a=Math.floor(Math.random()*90)+10;b=Math.floor(Math.random()*Math.min(a,50))+1;op='-';currentAnswer=a-b;break;
+        case 2:a=Math.floor(Math.random()*9)+1;b=Math.floor(Math.random()*9)+1;op='×';currentAnswer=a*b;break;
+        case 3:b=Math.floor(Math.random()*9)+1;currentAnswer=Math.floor(Math.random()*9)+1;a=b*currentAnswer;op='÷';break;
+      }
+      questionEl.textContent=a+' '+op+' '+b+' = ?';
+      answerInput.value='';answerInput.className='answer-input';answerInput.focus();
+    }
+
+    function startTimer(){
+      timeLeft=TIME_LIMIT;timerFill.style.width='100%';
+      timer=setInterval(()=>{
+        timeLeft-=0.1;
+        const pct=(timeLeft/TIME_LIMIT)*100;
+        timerFill.style.width=pct+'%';
+        timerFill.style.background=pct>30?'linear-gradient(90deg,#ff6d00,#ffab40)':'linear-gradient(90deg,#d32f2f,#f44336)';
+        if(timeLeft<=0){timeUp()}
+      },100);
+    }
+
+    function timeUp(){
+      clearInterval(timer);timerFill.style.width='0%';
+      if(!gaming)return;
+      total++;updateStats();streak=0;updateStats();
+      msgEl.textContent='⏰ 时间到！正确答案是 '+currentAnswer;
+      msgEl.style.color='var(--wrong)';msgEl.style.display='block';
+      setTimeout(()=>{if(gaming){genQuestion();startTimer();msgEl.style.display='none'}},1500);
+    }
+
+    answerInput.addEventListener('keydown',e=>{
+      if(e.key==='Enter'&&gaming){
+        const val=parseInt(answerInput.value);
+        if(isNaN(val))return;
+        clearInterval(timer);total++;
+        if(val===currentAnswer){
+          answerInput.className='answer-input correct';correct++;streak++;
+          setScore(score+10+(streak>5?5:0));
+          msgEl.textContent='✅ 正确！'+(streak>5?'🎯 连击加成！':'');
+          msgEl.style.color='var(--correct)';msgEl.style.display='block';
+        }else{
+          answerInput.className='answer-input wrong';streak=0;
+          msgEl.textContent='❌ 答案是 '+currentAnswer;
+          msgEl.style.color='var(--wrong)';msgEl.style.display='block';
+        }
+        updateStats();
+        setTimeout(()=>{if(gaming){genQuestion();startTimer();msgEl.style.display='none'}},1000);
+      }
+    });
+
+    function start(){
+      gaming=true;score=0;correct=0;total=0;streak=0;
+      setScore(0);updateStats();msgEl.style.display='none';
+      genQuestion();startTimer();answerInput.focus();
+    }
+
+    function stop(){gaming=false;clearInterval(timer)}
+    document.getElementById('restart').onclick=()=>{stop();start()};
+    start();
+    window.addEventListener('beforeunload',stop);
+  </script>
+</body>
+</html>

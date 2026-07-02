@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>分解质因数</title>
+  <style>
+    :root{--bg:#ede7f6;--card:#ffffff;--accent:#b39ddb;--accent2:#311b92;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .question{font-size:26px;font-weight:bold;color:var(--accent2);margin:20px 0;text-align:center}
+    .options{display:flex;flex-wrap:wrap;gap:15px;justify-content:center;margin:20px 0}
+    .opt-btn{min-width:150px;padding:10px 20px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:15px;border:none;font-size:20px;font-weight:bold;color:white;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(49,27,146,0.3)}
+    .opt-btn:active{transform:scale(0.95)}
+    .opt-btn.correct{background:var(--correct)}
+    .opt-btn.wrong{background:var(--wrong)}
+    .btn{background:linear-gradient(135deg,var(--accent2),#4527a0);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(49,27,146,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.question{font-size:22px}.opt-btn{min-width:130px;font-size:18px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🌳 分解质因数</h1>
+      <p>把一个<strong>合数</strong>写成几个<strong>质数相乘</strong>的形式，叫做<strong>分解质因数</strong>。这些质数叫做这个合数的<strong>质因数</strong>。</p>
+      <p style="margin-top:8px">💡 分解方法：
+        <br>① <strong>短除法</strong>：用质数从小到大依次去除
+        <br>② <strong>树形图法</strong>：不断分解为两个因数</p>
+      <p style="margin-top:8px">🔢 例如：30 = 2 × 3 × 5<br>短除法：30 ÷ 2 = 15, 15 ÷ 3 = 5</p>
+      <p style="margin-top:8px">📝 每个合数都可以写成几个质因数相乘的形式。</p>
+      <div style="margin-top:16px;padding:12px;background:#b39ddb;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        选择正确的分解质因数结果！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🌳 分解质因数挑战</h2>
+      <div class="hint">选择正确的分解结果</div>
+
+      <div class="question" id="question"></div>
+
+      <div class="options" id="options"></div>
+
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questionEl = document.getElementById('question')
+    const optionsEl = document.getElementById('options')
+    const nextBtn = document.getElementById('next')
+    const resetBtn = document.getElementById('reset')
+    const scoreEl = document.getElementById('scoreVal')
+    const messageEl = document.getElementById('message')
+
+    let score = 0
+    let currentAnswer = ''
+
+    const questions = [
+      { text: '12分解质因数是？', options: ['2×6', '3×4', '2×2×3', '1×12'], answer: '2×2×3' },
+      { text: '18分解质因数是？', options: ['2×9', '3×6', '2×3×3', '1×18'], answer: '2×3×3' },
+      { text: '20分解质因数是？', options: ['2×10', '4×5', '2×2×5', '1×20'], answer: '2×2×5' },
+      { text: '28分解质因数是？', options: ['4×7', '2×14', '2×2×7', '1×28'], answer: '2×2×7' },
+      { text: '36分解质因数是？', options: ['4×9', '6×6', '2×2×3×3', '2×3×6'], answer: '2×2×3×3' },
+      { text: '45分解质因数是？', options: ['5×9', '3×3×5', '3×15', '1×45'], answer: '3×3×5' },
+      { text: '下列哪个是质数，不能分解？', options: ['10', '15', '17', '21'], answer: '17' },
+      { text: '24分解质因数是？', options: ['2×12', '3×8', '2×2×2×3', '4×6'], answer: '2×2×2×3' },
+      { text: '42分解质因数是？', options: ['6×7', '2×3×7', '2×21', '3×14'], answer: '2×3×7' },
+      { text: '60分解质因数是？', options: ['2×30', '3×20', '2×2×3×5', '4×15'], answer: '2×2×3×5' },
+      { text: '50分解质因数是？', options: ['2×25', '5×10', '2×5×5', '1×50'], answer: '2×5×5' },
+      { text: '分解质因数时，必须分解到所有因数都是？', options: ['奇数', '偶数', '质数', '合数'], answer: '质数' }
+    ]
+
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+
+    function generateQuestion() {
+      const index = Math.floor(Math.random() * questions.length)
+      const q = questions[index]
+      currentAnswer = q.answer
+
+      questionEl.textContent = q.text
+      messageEl.style.display = 'none'
+
+      optionsEl.innerHTML = ''
+      q.options.forEach(opt => {
+        const btn = document.createElement('button')
+        btn.className = 'opt-btn'
+        btn.textContent = opt
+        btn.addEventListener('click', () => {
+          if (opt === currentAnswer) {
+            btn.classList.add('correct')
+            messageEl.textContent = '✅ 正确！太棒了！'
+            messageEl.style.color = 'var(--correct)'
+            messageEl.style.display = 'block'
+            setScore(score + 10)
+          } else {
+            btn.classList.add('wrong')
+            messageEl.textContent = '❌ 不对哦，正确答案是 ' + currentAnswer
+            messageEl.style.color = 'var(--wrong)'
+            messageEl.style.display = 'block'
+          }
+        })
+        optionsEl.appendChild(btn)
+      })
+    }
+
+    function init() {
+      score = 0
+      setScore(0)
+      generateQuestion()
+    }
+
+    nextBtn.addEventListener('click', generateQuestion)
+    resetBtn.addEventListener('click', init)
+    init()
+  </script>
+</body>
+</html>

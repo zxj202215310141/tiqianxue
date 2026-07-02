@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>容积单位</title>
+  <style>
+    :root{--bg:#e0f7fa;--card:#ffffff;--accent:#80deea;--accent2:#00838f;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .question{font-size:28px;font-weight:bold;color:var(--accent2);margin:20px 0;text-align:center}
+    .units{display:flex;flex-wrap:wrap;gap:15px;justify-content:center;margin:20px 0}
+    .unit-card{width:140px;height:100px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:15px;border:none;font-size:18px;font-weight:bold;color:white;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(0,131,143,0.3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+    .unit-card:active{transform:scale(0.95)}
+    .unit-card.correct{background:var(--correct)}
+    .unit-card.wrong{background:var(--wrong)}
+    .btn{background:linear-gradient(135deg,var(--accent2),#26c6da);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(0,131,143,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.question{font-size:22px}.unit-card{width:120px;height:90px;font-size:16px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🥤 容积单位</h1>
+      <p>常用的容积单位有：毫升(mL)、升(L)。</p>
+      <p style="margin-top:8px">💡 1升 = 1000毫升。</p>
+      <p style="margin-top:8px">🔢 一瓶矿泉水大约是500毫升，一桶食用油大约是5升。</p>
+      <div style="margin-top:16px;padding:12px;background:#80deea;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        选择正确的容积单位！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🥤 容积单位挑战</h2>
+      <div class="hint">选择最合适的容积单位</div>
+      
+      <div class="question" id="question">一瓶饮料大约是500 ___</div>
+      
+      <div class="units" id="units">
+        <button class="unit-card">mL</button>
+        <button class="unit-card">L</button>
+      </div>
+      
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+      
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questionEl = document.getElementById('question')
+    const unitsEl = document.getElementById('units')
+    const nextBtn = document.getElementById('next')
+    const resetBtn = document.getElementById('reset')
+    const scoreEl = document.getElementById('scoreVal')
+    const messageEl = document.getElementById('message')
+    
+    let score = 0
+    let currentAnswer = ''
+    
+    const questions = [
+      { text: '一瓶矿泉水大约是500 ___', answer: 'mL' },
+      { text: '一桶食用油大约是5 ___', answer: 'L' },
+      { text: '一杯牛奶大约是250 ___', answer: 'mL' },
+      { text: '一个热水瓶大约能装2 ___', answer: 'L' },
+      { text: '一瓶眼药水大约是5 ___', answer: 'mL' },
+      { text: '一辆汽车的油箱大约能装50 ___', answer: 'L' },
+      { text: '一瓶可乐大约是1.5 ___', answer: 'L' },
+      { text: '一瓶口服液大约是10 ___', answer: 'mL' },
+      { text: '一个鱼缸大约能装50 ___', answer: 'L' },
+      { text: '一小杯果汁大约是150 ___', answer: 'mL' }
+    ]
+    
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+    
+    function generateQuestion() {
+      const index = Math.floor(Math.random() * questions.length)
+      const q = questions[index]
+      currentAnswer = q.answer
+      
+      questionEl.textContent = q.text
+      messageEl.style.display = 'none'
+      
+      const buttons = unitsEl.querySelectorAll('button')
+      buttons.forEach(btn => {
+        btn.classList.remove('correct', 'wrong')
+      })
+    }
+    
+    unitsEl.addEventListener('click', e => {
+      if (e.target.classList.contains('unit-card')) {
+        const selected = e.target.textContent
+        
+        if (selected === currentAnswer) {
+          e.target.classList.add('correct')
+          messageEl.textContent = '✅ 正确！太棒了！'
+          messageEl.style.color = 'var(--correct)'
+          messageEl.style.display = 'block'
+          setScore(score + 10)
+        } else {
+          e.target.classList.add('wrong')
+          messageEl.textContent = '❌ 不对哦，正确答案是 ' + currentAnswer + '！'
+          messageEl.style.color = 'var(--wrong)'
+          messageEl.style.display = 'block'
+        }
+      }
+    })
+    
+    function init() {
+      score = 0
+      setScore(0)
+      generateQuestion()
+    }
+    
+    nextBtn.addEventListener('click', generateQuestion)
+    resetBtn.addEventListener('click', init)
+    init()
+  </script>
+</body>
+</html>

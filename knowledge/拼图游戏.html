@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>拼图游戏</title>
+  <style>
+    :root{--bg:#fff8e1;--card:#ffffff;--accent:#ffe082;--accent2:#f57f17;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .tangram-canvas{width:240px;height:240px;border:3px solid #e0e0e0;border-radius:16px;margin:12px 0;position:relative;background:#fafafa}
+    .tangram-piece{position:absolute;cursor:grab;transition:box-shadow 0.2s;border-radius:4px}
+    .tangram-piece:active{cursor:grabbing}
+    .tangram-piece.dragging{box-shadow:0 8px 16px rgba(0,0,0,0.3);z-index:10}
+    .tangram-piece.placed{box-shadow:0 0 0 3px var(--correct)}
+    .puzzle-target{position:absolute;border:2px dashed #bdbdbd;border-radius:4px;background:rgba(0,0,0,0.03)}
+    .btn{background:linear-gradient(135deg,var(--accent2),#ffb300);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(245,127,23,0.3)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:12px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🧩 拼图游戏</h1>
+      <p>数学拼图游戏是将几何图形分割后重新组合的智力游戏，最经典的例子是中国的<strong>七巧板</strong>。</p>
+      <p style="margin-top:8px">🧠 拼图游戏的好处：<br>• 培养<strong>空间想象力</strong>和<strong>几何直觉</strong><br>• 锻炼<strong>逻辑推理</strong>能力<br>• 理解<strong>面积守恒</strong>（拼图形状变了但面积不变）</p>
+      <p style="margin-top:8px">💡 七巧板由7块板组成：5个三角形、1个正方形、1个平行四边形，可拼出上千种图案！</p>
+      <div style="margin-top:16px;padding:12px;background:#ffecb3;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        用方块拼出指定的形状！拖动彩色方块到灰色虚线区域，填满所有目标区域即可过关。
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🧩 方块拼图</h2>
+      <div class="hint">把彩色方块拖到灰色虚线框中，填满所有区域</div>
+      <div class="tangram-canvas" id="canvas"></div>
+      <div class="row">
+        <button id="reset" class="btn">🔄 重置</button>
+        <button id="newPuzzle" class="btn">🆕 新题</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      <div id="msg" style="margin-top:12px;font-weight:bold;font-size:20px;display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const canvas=document.getElementById('canvas'),scoreEl=document.getElementById('scoreVal'),msgEl=document.getElementById('msg');
+    let score=0,placedCount=0,totalTargets=0;
+    const CANVAS_SIZE=240;
+
+    function setScore(v){score=v;scoreEl.textContent=score}
+
+    const puzzles=[
+      {pieces:[{x:10,y:10,w:100,h:100,c:'#e53935'},{x:130,y:10,w:100,h:100,c:'#1e88e5'},{x:10,y:130,w:100,h:100,c:'#43a047'},{x:130,y:130,w:100,h:100,c:'#fdd835'}],
+       targets:[{x:0,y:0,w:120,h:120},{x:120,y:0,w:120,h:120},{x:0,y:120,w:120,h:120},{x:120,y:120,w:120,h:120}]},
+      {pieces:[{x:50,y:10,w:140,h:70,c:'#e53935'},{x:50,y:90,w:140,h:70,c:'#1e88e5'},{x:50,y:170,w:140,h:70,c:'#43a047'}],
+       targets:[{x:0,y:0,w:240,h:80},{x:0,y:80,w:240,h:80},{x:0,y:160,w:240,h:80}]},
+    ];
+
+    function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+    function init(){
+      placedCount=0;msgEl.style.display='none';
+      const puzzle=puzzles[Math.floor(Math.random()*puzzles.length)];
+      totalTargets=puzzle.targets.length;
+      canvas.innerHTML='';
+
+      puzzle.targets.forEach(t=>{
+        const target=document.createElement('div');target.className='puzzle-target';
+        target.style.cssText='left:'+t.x+'px;top:'+t.y+'px;width:'+t.w+'px;height:'+t.h+'px';
+        target.id='target-'+t.x+'-'+t.y;canvas.appendChild(target);
+      });
+
+      const shuffled=shuffle([...puzzle.pieces]);
+      shuffled.forEach((p,i)=>{
+        const piece=document.createElement('div');piece.className='tangram-piece';
+        piece.style.cssText='left:'+p.x+'px;top:'+p.y+'px;width:'+p.w+'px;height:'+p.h+'px;background:linear-gradient(135deg,'+p.c+','+p.c+'cc)';
+        piece.id='piece-'+i;piece.dataset.w=p.w;piece.dataset.h=p.h;piece.dataset.color=p.c;
+        piece.draggable=true;
+        piece.addEventListener('dragstart',e=>{
+          e.dataTransfer.setData('pieceId',i);e.dataTransfer.setData('w',p.w);e.dataTransfer.setData('h',p.h);
+          e.dataTransfer.setData('color',p.c);piece.classList.add('dragging');
+        });
+        piece.addEventListener('dragend',()=>piece.classList.remove('dragging'));
+        canvas.appendChild(piece);
+      });
+
+      canvas.addEventListener('dragover',e=>e.preventDefault());
+      canvas.addEventListener('drop',e=>{
+        e.preventDefault();
+        const pieceId=e.dataTransfer.getData('pieceId');const pw=parseInt(e.dataTransfer.getData('w'));
+        const ph=parseInt(e.dataTransfer.getData('h'));const color=e.dataTransfer.getData('color');
+        const piece=document.getElementById('piece-'+pieceId);if(!piece||piece.classList.contains('placed'))return;
+        const rect=canvas.getBoundingClientRect();
+        const x=e.clientX-rect.left-pw/2,y=e.clientY-rect.top-ph/2;
+        const targets=canvas.querySelectorAll('.puzzle-target');
+        let matched=false;
+        targets.forEach(t=>{
+          if(t.classList.contains('filled'))return;
+          const tx=parseInt(t.style.left),ty=parseInt(t.style.top),tw=parseInt(t.style.width),th=parseInt(t.style.height);
+          const cx=x+pw/2,cy=y+ph/2,tcx=tx+tw/2,tcy=ty+th/2;
+          if(Math.abs(cx-tcx)<20&&Math.abs(cy-tcy)<20&&Math.abs(pw-tw)<10&&Math.abs(ph-th)<10){
+            piece.style.left=tx+'px';piece.style.top=ty+'px';piece.classList.add('placed');
+            t.classList.add('filled');t.style.background='rgba(0,184,148,0.15)';t.style.borderColor='var(--correct)';
+            placedCount++;matched=true;setScore(score+25);
+            if(placedCount>=totalTargets){
+              msgEl.textContent='🎉 完美！所有方块都放对了位置！';
+              msgEl.style.color='var(--correct)';msgEl.style.display='block';
+            }
+          }
+        });
+        if(!matched){piece.style.left=Math.max(0,Math.min(CANVAS_SIZE-pw,x))+'px';piece.style.top=Math.max(0,Math.min(CANVAS_SIZE-ph,y))+'px'}
+      });
+    }
+
+    document.getElementById('reset').onclick=init;
+    document.getElementById('newPuzzle').onclick=()=>{setScore(0);init()};
+    init();
+  </script>
+</body>
+</html>

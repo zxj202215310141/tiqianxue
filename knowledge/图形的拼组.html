@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>图形的拼组</title>
+  <style>
+    :root{--bg:#fff8e1;--card:#ffffff;--accent:#ffe082;--accent2:#f9a825;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .target-area{width:160px;height:160px;border:4px dashed #f9a825;border-radius:16px;margin:16px 0;display:flex;align-items:center;justify-content:center;background:#fff8e1;position:relative}
+    .target-outline{font-size:80px;color:#e0e0e0}
+    .pieces-tray{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0;justify-content:center}
+    .piece{width:70px;height:70px;background:linear-gradient(135deg,var(--accent2),#ffb300);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:36px;color:white;cursor:grab;transition:all 0.3s;box-shadow:0 4px 8px rgba(249,168,37,0.4);user-select:none}
+    .piece:active{cursor:grabbing;transform:scale(1.1)}
+    .piece.dragging{opacity:0.5}
+    .piece.used{opacity:0;pointer-events:none;transform:scale(0.5)}
+    .drop-zone{width:70px;height:70px;border:3px dashed #bdbdbd;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#bdbdbd;transition:all 0.3s;background:#fafafa}
+    .drop-zone.highlight{border-color:var(--accent2);background:#fff8e1}
+    .drop-zone.filled{border-color:var(--correct);background:linear-gradient(135deg,var(--accent2),#ffb300);color:white;font-size:36px}
+    .puzzle-layout{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0}
+    .btn{background:linear-gradient(135deg,var(--accent2),#ffb300);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(249,168,37,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:12px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🧩 图形的拼组</h1>
+      <p>图形的拼组是用简单的图形（如三角形、正方形、长方形等）组合成更复杂图形的方法。通过拼组可以培养<strong>空间想象能力</strong>和<strong>创造力</strong>。</p>
+      <p style="margin-top:8px">📐 常见拼组：两个完全一样的三角形可以拼成<strong>平行四边形</strong>；两个正方形可以拼成<strong>长方形</strong>；四个小正方形可以拼成<strong>大正方形</strong>。</p>
+      <p style="margin-top:8px">💡 七巧板就是图形拼组的经典例子，用7块简单的板可以拼出上千种图案！</p>
+      <div style="margin-top:16px;padding:12px;background:#ffecb3;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        将下方的小图形拖放到右侧对应位置，拼出一个完整的正方形！用4个小正方形拼成一个大正方形。
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🧩 图形拼组挑战</h2>
+      <div class="hint">把小图形拖到目标位置拼成完整图形</div>
+      <div class="target-area" id="targetArea">
+        <div class="target-outline">▣</div>
+      </div>
+      <div class="puzzle-layout" id="puzzleLayout"></div>
+      <div class="pieces-tray" id="piecesTray"></div>
+      <div class="row">
+        <button id="reset" class="btn">🔄 重置游戏</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      <div id="msg" style="margin-top:12px;font-weight:bold;font-size:20px;display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const piecesTray=document.getElementById('piecesTray'),puzzleLayout=document.getElementById('puzzleLayout'),
+      scoreEl=document.getElementById('scoreVal'),msgEl=document.getElementById('msg');
+    let score=0,placedCount=0;
+    const totalPieces=4;
+    const shapes=['▲','■','●','★'];
+
+    function setScore(v){score=v;scoreEl.textContent=score}
+
+    function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+    function init(){
+      placedCount=0;setScore(0);msgEl.style.display='none';
+      const shuffled=shuffle([...shapes]);
+      piecesTray.innerHTML='';
+      shuffled.forEach((s,i)=>{
+        const piece=document.createElement('div');piece.className='piece';piece.textContent=s;piece.id='piece-'+i;
+        piece.draggable=true;piece.dataset.shape=s;
+        piece.addEventListener('dragstart',e=>{e.dataTransfer.setData('shape',s);e.dataTransfer.setData('pieceId',i);piece.classList.add('dragging')});
+        piece.addEventListener('dragend',()=>{piece.classList.remove('dragging')});
+        piecesTray.appendChild(piece);
+      });
+
+      puzzleLayout.innerHTML='';
+      const targetOrder=shuffle([0,1,2,3]);
+      targetOrder.forEach((idx,i)=>{
+        const zone=document.createElement('div');zone.className='drop-zone';zone.textContent='?';
+        zone.dataset.targetShape=shapes[idx];zone.id='drop-'+i;
+        zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('highlight')});
+        zone.addEventListener('dragleave',()=>{zone.classList.remove('highlight')});
+        zone.addEventListener('drop',e=>{
+          e.preventDefault();zone.classList.remove('highlight');
+          const shape=e.dataTransfer.getData('shape');const pieceId=e.dataTransfer.getData('pieceId');
+          if(zone.dataset.targetShape===shape && !zone.classList.contains('filled')){
+            zone.classList.add('filled');zone.textContent=shape;
+            document.getElementById('piece-'+pieceId).classList.add('used');
+            placedCount++;setScore(score+25);
+            if(placedCount>=totalPieces){
+              msgEl.textContent='🎉 太棒了！你成功拼出了完整图形！';
+              msgEl.style.color='var(--correct)';msgEl.style.display='block';
+              setTimeout(init,2000);
+            }
+          }else{
+            setScore(Math.max(0,score-5));
+          }
+        });
+        puzzleLayout.appendChild(zone);
+      });
+    }
+
+    document.getElementById('reset').onclick=init;
+    init();
+  </script>
+</body>
+</html>

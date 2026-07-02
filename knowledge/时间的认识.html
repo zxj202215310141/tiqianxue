@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>时间的认识</title>
+  <style>
+    :root{--bg:#f0fff4;--card:#ffffff;--accent:#55efc4;--accent2:#00b894;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .clock-container{position:relative;width:220px;height:220px;margin:20px auto}
+    .clock-face{width:100%;height:100%;border-radius:50%;background:white;border:8px solid var(--accent2);position:relative;box-shadow:0 4px 12px rgba(0,184,148,0.3)}
+    .clock-mark{position:absolute;width:4px;height:12px;background:var(--accent2);left:50%;top:8px;transform-origin:50% 102px}
+    .clock-center{position:absolute;width:16px;height:16px;background:var(--accent2);border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}
+    .hour-hand{position:absolute;width:6px;height:60px;background:#2d3436;border-radius:3px;left:50%;top:50%;transform-origin:50% bottom;margin-left:-3px;margin-top:-60px}
+    .minute-hand{position:absolute;width:4px;height:80px;background:#636e72;border-radius:2px;left:50%;top:50%;transform-origin:50% bottom;margin-left:-2px;margin-top:-80px}
+    .time-display{font-size:36px;font-weight:bold;color:var(--accent2);margin:16px 0}
+    .time-parts{display:flex;gap:16px;margin:16px 0}
+    .time-part{display:flex;flex-direction:column;align-items:center}
+    .time-label{font-size:14px;color:#636e72;margin-bottom:8px}
+    .time-options{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+    .time-option{padding:10px 16px;background:linear-gradient(135deg,var(--accent),#81ecec);border-radius:10px;font-weight:bold;color:#2d3436;cursor:grab;transition:all 0.3s;box-shadow:0 4px 8px rgba(85,239,196,0.4)}
+    .time-option:active{transform:scale(1.1)}
+    .btn{background:linear-gradient(135deg,var(--accent2),#00cec9);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(0,184,148,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.clock-container{width:200px;height:200px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>⏰ 时间的认识</h1>
+      <p>时间由小时、分钟、秒组成。时钟上有三根指针：最短的是时针，较长的是分针，最细的是秒针。</p>
+      <p style="margin-top:8px">⏳ 换算关系：1小时 = 60分钟，1分钟 = 60秒。</p>
+      <p style="margin-top:8px">📖 认读方法：时针指向几就是几点，分针指向几就乘5得到分钟数。</p>
+      <div style="margin-top:16px;padding:12px;background:#55efc4;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        观察时钟上的时间，把正确的小时和分钟拖到对应的位置。看看你是不是时间小达人！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🕐 时钟小达人</h2>
+      <div class="hint">观察时钟，拖拽正确的时间</div>
+      
+      <div class="clock-container" id="clock">
+        <div class="clock-face" id="clockFace"></div>
+        <div class="hour-hand" id="hourHand"></div>
+        <div class="minute-hand" id="minuteHand"></div>
+        <div class="clock-center"></div>
+      </div>
+      
+      <div class="time-display" id="timeDisplay">?:?</div>
+      
+      <div class="time-parts">
+        <div class="time-part">
+          <div class="time-label">小时</div>
+          <div class="time-options hour-options" id="hourOptions"></div>
+        </div>
+        <div class="time-part">
+          <div class="time-label">分钟</div>
+          <div class="time-options minute-options" id="minuteOptions"></div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const clockFace = document.getElementById('clockFace')
+    const hourHand = document.getElementById('hourHand')
+    const minuteHand = document.getElementById('minuteHand')
+    const timeDisplay = document.getElementById('timeDisplay')
+    const hourOptions = document.getElementById('hourOptions')
+    const minuteOptions = document.getElementById('minuteOptions')
+    const nextBtn = document.getElementById('next')
+    const resetBtn = document.getElementById('reset')
+    const scoreEl = document.getElementById('scoreVal')
+    const messageEl = document.getElementById('message')
+    
+    let score = 0
+    let currentHour = 0
+    let currentMinute = 0
+    let selectedHour = null
+    let selectedMinute = null
+    
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+    
+    function drawClock() {
+      clockFace.innerHTML = ''
+      for (let i = 0; i < 12; i++) {
+        const mark = document.createElement('div')
+        mark.className = 'clock-mark'
+        mark.style.transform = `rotate(${i * 30}deg)`
+        mark.style.height = i % 3 === 0 ? '16px' : '10px'
+        mark.style.width = i % 3 === 0 ? '6px' : '4px'
+        clockFace.appendChild(mark)
+      }
+    }
+    
+    function setTime(hour, minute) {
+      currentHour = hour
+      currentMinute = minute
+      
+      const hourDeg = (hour % 12) * 30 + minute * 0.5
+      const minuteDeg = minute * 6
+      
+      hourHand.style.transform = `rotate(${hourDeg}deg)`
+      minuteHand.style.transform = `rotate(${minuteDeg}deg)`
+      
+      timeDisplay.textContent = `${hour}:${minute.toString().padStart(2, '0')}`
+    }
+    
+    function generateOptions() {
+      const hourValues = []
+      while (hourValues.length < 4) {
+        const val = Math.floor(Math.random() * 12) + 1
+        if (!hourValues.includes(val)) hourValues.push(val)
+      }
+      if (!hourValues.includes(currentHour)) {
+        hourValues[Math.floor(Math.random() * 4)] = currentHour
+      }
+      shuffle(hourValues)
+      
+      hourOptions.innerHTML = ''
+      hourValues.forEach(val => {
+        const opt = document.createElement('div')
+        opt.className = 'time-option'
+        opt.draggable = true
+        opt.textContent = val + '时'
+        opt.dataset.val = val
+        opt.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('type', 'hour')
+          e.dataTransfer.setData('val', val)
+          opt.style.opacity = '0.5'
+        })
+        opt.addEventListener('dragend', () => {
+          opt.style.opacity = '1'
+        })
+        hourOptions.appendChild(opt)
+      })
+      
+      const minuteValues = []
+      while (minuteValues.length < 4) {
+        const val = Math.floor(Math.random() * 12) * 5
+        if (!minuteValues.includes(val)) minuteValues.push(val)
+      }
+      if (!minuteValues.includes(currentMinute)) {
+        minuteValues[Math.floor(Math.random() * 4)] = currentMinute
+      }
+      shuffle(minuteValues)
+      
+      minuteOptions.innerHTML = ''
+      minuteValues.forEach(val => {
+        const opt = document.createElement('div')
+        opt.className = 'time-option'
+        opt.draggable = true
+        opt.textContent = val + '分'
+        opt.dataset.val = val
+        opt.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('type', 'minute')
+          e.dataTransfer.setData('val', val)
+          opt.style.opacity = '0.5'
+        })
+        opt.addEventListener('dragend', () => {
+          opt.style.opacity = '1'
+        })
+        minuteOptions.appendChild(opt)
+      })
+    }
+    
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]]
+      }
+      return array
+    }
+    
+    function checkAnswer() {
+      if (selectedHour === currentHour && selectedMinute === currentMinute) {
+        messageEl.textContent = '✅ 答对了！你真是时间小达人！'
+        messageEl.style.color = 'var(--correct)'
+        messageEl.style.display = 'block'
+        setScore(score + 10)
+        setTimeout(() => {
+          nextQuestion()
+        }, 1000)
+      } else if (selectedHour === currentHour) {
+        messageEl.textContent = '⏰ 小时对了，再看看分钟！'
+        messageEl.style.color = '#fdcb6e'
+        messageEl.style.display = 'block'
+      } else if (selectedMinute === currentMinute) {
+        messageEl.textContent = '⏰ 分钟对了，再看看小时！'
+        messageEl.style.color = '#fdcb6e'
+        messageEl.style.display = 'block'
+      }
+    }
+    
+    timeDisplay.addEventListener('dragover', e => e.preventDefault())
+    timeDisplay.addEventListener('drop', e => {
+      e.preventDefault()
+      const type = e.dataTransfer.getData('type')
+      const val = parseInt(e.dataTransfer.getData('val'))
+      
+      if (type === 'hour') {
+        selectedHour = val
+      } else if (type === 'minute') {
+        selectedMinute = val
+      }
+      
+      if (selectedHour !== null && selectedMinute !== null) {
+        timeDisplay.textContent = `${selectedHour}:${selectedMinute.toString().padStart(2, '0')}`
+        checkAnswer()
+      }
+    })
+    
+    function nextQuestion() {
+      selectedHour = null
+      selectedMinute = null
+      messageEl.style.display = 'none'
+      
+      const hour = Math.floor(Math.random() * 12) + 1
+      const minute = Math.floor(Math.random() * 12) * 5
+      
+      setTime(hour, minute)
+      generateOptions()
+    }
+    
+    function init() {
+      score = 0
+      setScore(0)
+      drawClock()
+      nextQuestion()
+    }
+    
+    nextBtn.addEventListener('click', nextQuestion)
+    resetBtn.addEventListener('click', init)
+    init()
+  </script>
+</body>
+</html>

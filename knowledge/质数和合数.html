@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>质数和合数</title>
+  <style>
+    :root{--bg:#e8f5e9;--card:#ffffff;--accent:#a5d6a7;--accent2:#1b5e20;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .question{font-size:26px;font-weight:bold;color:var(--accent2);margin:20px 0;text-align:center}
+    .options{display:flex;flex-wrap:wrap;gap:15px;justify-content:center;margin:20px 0}
+    .opt-btn{min-width:150px;padding:10px 20px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:15px;border:none;font-size:20px;font-weight:bold;color:white;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(27,94,32,0.3)}
+    .opt-btn:active{transform:scale(0.95)}
+    .opt-btn.correct{background:var(--correct)}
+    .opt-btn.wrong{background:var(--wrong)}
+    .btn{background:linear-gradient(135deg,var(--accent2),#388e3c);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(27,94,32,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.question{font-size:22px}.opt-btn{min-width:130px;font-size:18px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🔢 质数和合数</h1>
+      <p>一个数如果只有<strong>1和它本身</strong>两个因数，这样的数叫做<strong>质数</strong>（也叫素数）。</p>
+      <p style="margin-top:8px">💡 一个数如果除了1和它本身以外<strong>还有别的因数</strong>，这样的数叫做<strong>合数</strong>。</p>
+      <p style="margin-top:8px">🔢 例如：
+        <br>质数：2, 3, 5, 7, 11, 13, 17, 19, 23, 29...
+        <br>合数：4, 6, 8, 9, 10, 12, 14, 15, 16, 18...
+        <br><strong>1既不是质数也不是合数</strong>。</p>
+      <p style="margin-top:8px">📝 2是最小的质数，也是唯一的偶质数。</p>
+      <div style="margin-top:16px;padding:12px;background:#a5d6a7;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        判断一个数是质数还是合数！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🔢 质数和合数挑战</h2>
+      <div class="hint">选择正确的答案</div>
+
+      <div class="question" id="question"></div>
+
+      <div class="options" id="options"></div>
+
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questionEl = document.getElementById('question')
+    const optionsEl = document.getElementById('options')
+    const nextBtn = document.getElementById('next')
+    const resetBtn = document.getElementById('reset')
+    const scoreEl = document.getElementById('scoreVal')
+    const messageEl = document.getElementById('message')
+
+    let score = 0
+    let currentAnswer = ''
+
+    const questions = [
+      { text: '11是质数还是合数？', options: ['质数', '合数', '既不是质数也不是合数', '无法判断'], answer: '质数' },
+      { text: '15是质数还是合数？', options: ['质数', '合数', '既不是质数也不是合数', '无法判断'], answer: '合数' },
+      { text: '1是什么数？', options: ['质数', '合数', '既不是质数也不是合数', '既是质数又是合数'], answer: '既不是质数也不是合数' },
+      { text: '最小的质数是？', options: ['1', '2', '3', '4'], answer: '2' },
+      { text: '最小的合数是？', options: ['1', '2', '3', '4'], answer: '4' },
+      { text: '下面哪个数是质数？', options: ['9', '15', '17', '21'], answer: '17' },
+      { text: '下面哪个数是合数？', options: ['2', '3', '7', '9'], answer: '9' },
+      { text: '唯一的偶质数是？', options: ['0', '1', '2', '4'], answer: '2' },
+      { text: '下面哪个不是质数？', options: ['13', '19', '21', '23'], answer: '21' },
+      { text: '20以内的质数有？', options: ['7个', '8个', '9个', '10个'], answer: '8个' },
+      { text: '下面哪个数是质数？', options: ['27', '29', '33', '35'], answer: '29' },
+      { text: '所有大于2的质数都是？', options: ['偶数', '奇数', '5的倍数', '3的倍数'], answer: '奇数' }
+    ]
+
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+
+    function generateQuestion() {
+      const index = Math.floor(Math.random() * questions.length)
+      const q = questions[index]
+      currentAnswer = q.answer
+
+      questionEl.textContent = q.text
+      messageEl.style.display = 'none'
+
+      optionsEl.innerHTML = ''
+      q.options.forEach(opt => {
+        const btn = document.createElement('button')
+        btn.className = 'opt-btn'
+        btn.textContent = opt
+        btn.addEventListener('click', () => {
+          if (opt === currentAnswer) {
+            btn.classList.add('correct')
+            messageEl.textContent = '✅ 正确！太棒了！'
+            messageEl.style.color = 'var(--correct)'
+            messageEl.style.display = 'block'
+            setScore(score + 10)
+          } else {
+            btn.classList.add('wrong')
+            messageEl.textContent = '❌ 不对哦，正确答案是 ' + currentAnswer
+            messageEl.style.color = 'var(--wrong)'
+            messageEl.style.display = 'block'
+          }
+        })
+        optionsEl.appendChild(btn)
+      })
+    }
+
+    function init() {
+      score = 0
+      setScore(0)
+      generateQuestion()
+    }
+
+    nextBtn.addEventListener('click', generateQuestion)
+    resetBtn.addEventListener('click', init)
+    init()
+  </script>
+</body>
+</html>

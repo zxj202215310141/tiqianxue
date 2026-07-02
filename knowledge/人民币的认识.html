@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>人民币的认识</title>
+  <style>
+    :root{--bg:#fff5f5;--card:#ffffff;--accent:#fd79a8;--accent2:#e84393;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .shop-items{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:16px 0}
+    .shop-item{background:linear-gradient(135deg,#ffeaa7,#fdcb6e);border-radius:12px;padding:12px;text-align:center;cursor:grab;transition:all 0.3s}
+    .shop-item:hover{transform:scale(1.05)}
+    .shop-item.selected{background:linear-gradient(135deg,#fd79a8,#e84393);color:white}
+    .shop-item img{width:60px;height:60px;margin-bottom:8px}
+    .cart{background:#f1f2f6;border-radius:12px;padding:16px;margin:16px 0;width:100%}
+    .cart-title{font-weight:bold;color:#636e72;margin-bottom:8px}
+    .cart-items{min-height:60px;border:2px dashed #b2bec3;border-radius:8px;padding:8px}
+    .cart-item{display:inline-block;background:white;border-radius:6px;padding:4px 8px;margin:4px;font-size:14px}
+    .total-price{font-size:24px;font-weight:bold;color:var(--accent2);text-align:center;margin:12px 0}
+    .money-pool{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:16px 0}
+    .money-bill{padding:8px 16px;background:linear-gradient(135deg,#00b894,#55efc4);color:white;border-radius:8px;font-weight:bold;cursor:grab;transition:all 0.3s;box-shadow:0 2px 4px rgba(0,184,148,0.4)}
+    .money-bill:active{transform:scale(1.1)}
+    .money-bill.yuan{background:linear-gradient(135deg,#0984e3,#74b9ff)}
+    .money-bill.jiao{background:linear-gradient(135deg,#fdcb6e,#ffeaa7);color:#2d3436}
+    .btn{background:linear-gradient(135deg,var(--accent2),#fd79a8);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(232,67,147,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.shop-items{grid-template-columns:repeat(3,1fr)}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>💰 人民币的认识</h1>
+      <p>人民币的基本单位是元，辅币是角和分。换算关系：1元 = 10角，1角 = 10分，所以1元 = 100分。</p>
+      <p style="margin-top:8px">常见的人民币面值有：1角、5角、1元、5元、10元、20元、50元、100元。</p>
+      <div style="margin-top:16px;padding:12px;background:#ffeaa7;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        先点击选购商品，然后拖拽人民币支付。看看你能不能用正确的钱数买到想要的东西！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🛒 小小超市</h2>
+      <div class="hint">点击选购商品，然后拖拽人民币支付</div>
+      
+      <div class="shop-items" id="shopItems">
+        <div class="shop-item" data-price="5">🍎 苹果<br><span style="font-size:14px">5元</span></div>
+        <div class="shop-item" data-price="3">🍌 香蕉<br><span style="font-size:14px">3元</span></div>
+        <div class="shop-item" data-price="8">🍕 披萨<br><span style="font-size:14px">8元</span></div>
+        <div class="shop-item" data-price="10">🍦 冰淇淋<br><span style="font-size:14px">10元</span></div>
+      </div>
+      
+      <div class="cart">
+        <div class="cart-title">🛒 购物车</div>
+        <div class="cart-items" id="cartItems">还没有商品哦~</div>
+        <div class="total-price">总计：<span id="total">0</span>元</div>
+      </div>
+      
+      <div class="money-pool" id="moneyPool"></div>
+      
+      <div class="row">
+        <button id="checkout" class="btn">💳 结账</button>
+        <button id="clear" class="btn">🗑️ 清空</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const shopItems = document.getElementById('shopItems')
+    const cartItems = document.getElementById('cartItems')
+    const totalEl = document.getElementById('total')
+    const moneyPool = document.getElementById('moneyPool')
+    const checkoutBtn = document.getElementById('checkout')
+    const clearBtn = document.getElementById('clear')
+    const scoreEl = document.getElementById('scoreVal')
+    const messageEl = document.getElementById('message')
+    
+    let score = 0
+    let cart = []
+    let paidMoney = []
+    let usedBills = new Set()
+
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+
+    function updateCart() {
+      if (cart.length === 0) {
+        cartItems.innerHTML = '还没有商品哦~'
+        totalEl.textContent = '0'
+      } else {
+        cartItems.innerHTML = cart.map(item => `<div class="cart-item">${item.icon} ${item.name}</div>`).join('')
+        totalEl.textContent = cart.reduce((sum, item) => sum + item.price, 0)
+      }
+      // Show paid amount
+      const paid = paidMoney.reduce((sum, m) => sum + m, 0)
+      const paidDisplay = document.getElementById('paidDisplay')
+      if (paidDisplay) {
+        paidDisplay.textContent = paid > 0 ? `已付：${paid}元` : ''
+      }
+    }
+
+    function initMoney() {
+      moneyPool.innerHTML = ''
+      usedBills = new Set()
+      const bills = [1, 2, 5, 10]
+      bills.forEach(amount => {
+        const bill = document.createElement('div')
+        bill.className = 'money-bill yuan'
+        bill.draggable = true
+        bill.textContent = amount + '元'
+        bill.dataset.amount = amount
+        bill.id = 'bill-' + amount + '-' + Date.now()
+        bill.addEventListener('dragstart', e => {
+          if (usedBills.has(bill.id)) {
+            e.preventDefault()
+            return
+          }
+          e.dataTransfer.setData('amount', amount)
+          e.dataTransfer.setData('billId', bill.id)
+          bill.style.opacity = '0.5'
+        })
+        bill.addEventListener('dragend', () => {
+          bill.style.opacity = '1'
+        })
+        moneyPool.appendChild(bill)
+      })
+    }
+    
+    const products = [
+      { icon: '🍎', name: '苹果', price: 5 },
+      { icon: '🍌', name: '香蕉', price: 3 },
+      { icon: '🍕', name: '披萨', price: 8 },
+      { icon: '🍦', name: '冰淇淋', price: 10 }
+    ]
+    
+    shopItems.addEventListener('click', e => {
+      const item = e.target.closest('.shop-item')
+      if (!item) return
+      
+      const price = parseInt(item.dataset.price)
+      const product = products.find(p => p.price === price)
+      if (product) {
+        cart.push(product)
+        updateCart()
+        messageEl.style.display = 'none'
+      }
+    })
+    
+    cartItems.addEventListener('dragover', e => e.preventDefault())
+    cartItems.addEventListener('drop', e => {
+      e.preventDefault()
+      const amount = parseInt(e.dataTransfer.getData('amount'))
+      const billId = e.dataTransfer.getData('billId')
+      if (!isNaN(amount) && !usedBills.has(billId)) {
+        usedBills.add(billId)
+        paidMoney.push(amount)
+        // Mark the bill as used
+        const billEl = document.getElementById(billId)
+        if (billEl) {
+          billEl.style.opacity = '0.3'
+          billEl.style.cursor = 'not-allowed'
+          billEl.draggable = false
+        }
+        updateCart()
+      }
+    })
+    
+    checkoutBtn.addEventListener('click', () => {
+      if (cart.length === 0) {
+        messageEl.textContent = '❌ 请先选购商品！'
+        messageEl.style.color = 'var(--wrong)'
+        messageEl.style.display = 'block'
+        return
+      }
+      
+      const total = cart.reduce((sum, item) => sum + item.price, 0)
+      const paid = paidMoney.reduce((sum, m) => sum + m, 0)
+      
+      if (paid === total) {
+        messageEl.textContent = '✅ 支付正确！购物成功！'
+        messageEl.style.color = 'var(--correct)'
+        messageEl.style.display = 'block'
+        setScore(score + 20)
+        setTimeout(() => {
+          cart = []
+          paidMoney = []
+          initMoney()
+          updateCart()
+          messageEl.style.display = 'none'
+        }, 1500)
+      } else if (paid > total) {
+        const change = paid - total
+        messageEl.textContent = `💰 支付成功！找零 ${change} 元`
+        messageEl.style.color = '#0984e3'
+        messageEl.style.display = 'block'
+        setScore(score + 15)
+        setTimeout(() => {
+          cart = []
+          paidMoney = []
+          initMoney()
+          updateCart()
+          messageEl.style.display = 'none'
+        }, 1500)
+      } else {
+        messageEl.textContent = `❌ 钱不够！还差 ${total - paid} 元`
+        messageEl.style.color = 'var(--wrong)'
+        messageEl.style.display = 'block'
+      }
+    })
+
+    clearBtn.addEventListener('click', () => {
+      cart = []
+      paidMoney = []
+      initMoney()
+      updateCart()
+      messageEl.style.display = 'none'
+    })
+
+    function init() {
+      score = 0
+      setScore(0)
+      cart = []
+      paidMoney = []
+      updateCart()
+      initMoney()
+    }
+    
+    init()
+  </script>
+</body>
+</html>

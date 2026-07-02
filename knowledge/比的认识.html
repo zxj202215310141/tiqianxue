@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>比的认识</title>
+  <style>
+    :root{--bg:#fff8e1;--card:#ffffff;--accent:#ffe082;--accent2:#e65100;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .question{font-size:26px;font-weight:bold;color:var(--accent2);margin:20px 0;text-align:center}
+    .options{display:flex;flex-wrap:wrap;gap:15px;justify-content:center;margin:20px 0}
+    .opt-btn{min-width:150px;padding:10px 20px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:15px;border:none;font-size:20px;font-weight:bold;color:white;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(230,81,0,0.3)}
+    .opt-btn:active{transform:scale(0.95)}
+    .opt-btn.correct{background:var(--correct)}
+    .opt-btn.wrong{background:var(--wrong)}
+    .btn{background:linear-gradient(135deg,var(--accent2),#ff7043);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(230,81,0,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.question{font-size:22px}.opt-btn{min-width:130px;font-size:18px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>📐 比的认识</h1>
+      <p>两个数相除，又叫做这两个数的<strong>比</strong>。"<strong>:</strong>"是<strong>比号</strong>，读作"比"。</p>
+      <p style="margin-top:8px">💡 比号前面的数叫做<strong>前项</strong>，比号后面的数叫做<strong>后项</strong>。比的前项除以后项所得的商，叫做<strong>比值</strong>。</p>
+      <p style="margin-top:8px">🔢 例如：3:4，读作"3比4"，前项是3，后项是4，比值是 3÷4 = 0.75。</p>
+      <p style="margin-top:8px">📝 比表示两个数量的关系，如：一杯果汁中，水和浓缩汁的比是3:1。</p>
+      <div style="margin-top:16px;padding:12px;background:#ffe082;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        根据描述选择正确的比！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>📐 比的认识挑战</h2>
+      <div class="hint">选择正确的答案</div>
+
+      <div class="question" id="question"></div>
+
+      <div class="options" id="options"></div>
+
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questionEl = document.getElementById('question')
+    const optionsEl = document.getElementById('options')
+    const nextBtn = document.getElementById('next')
+    const resetBtn = document.getElementById('reset')
+    const scoreEl = document.getElementById('scoreVal')
+    const messageEl = document.getElementById('message')
+
+    let score = 0
+    let currentAnswer = ''
+
+    const questions = [
+      { text: '教室里有男生15人，女生12人，男生和女生人数的比是？', options: ['12:15', '15:12', '27:15', '15:27'], answer: '15:12' },
+      { text: '一个长方形的长是8厘米，宽是5厘米，长和宽的比是？', options: ['5:8', '8:5', '13:8', '8:13'], answer: '8:5' },
+      { text: '小明3分钟走了240米，路程和时间的比是？', options: ['3:240', '240:3', '80:1', '1:80'], answer: '240:3' },
+      { text: '妈妈买了2千克苹果花了16元，总价和数量的比是？', options: ['2:16', '8:1', '16:2', '1:8'], answer: '16:2' },
+      { text: '配制一杯蜂蜜水，用了10毫升蜂蜜和200毫升水，蜂蜜和水的比是？', options: ['10:210', '200:10', '10:200', '20:1'], answer: '10:200' },
+      { text: '在比 5:8 中，前项是？', options: ['5', '8', '13', '3'], answer: '5' },
+      { text: '在比 9:4 中，后项是？', options: ['9', '5', '13', '4'], answer: '4' },
+      { text: '比的前项相当于分数的？', options: ['分母', '分子', '分数线', '分数值'], answer: '分子' },
+      { text: '比的后项相当于除法的？', options: ['被除数', '商', '除数', '积'], answer: '除数' },
+      { text: '学校篮球队有5人，足球队有8人，篮球队和足球队人数的比是？', options: ['8:5', '5:13', '5:8', '8:13'], answer: '5:8' },
+      { text: '小红用10元钱买了4支笔，总价和数量的比是？', options: ['4:10', '1:4', '2.5:1', '10:4'], answer: '10:4' },
+      { text: '比的后项能为0吗？', options: ['能', '不能', '有时候能', '不确定'], answer: '不能' }
+    ]
+
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+
+    function generateQuestion() {
+      const index = Math.floor(Math.random() * questions.length)
+      const q = questions[index]
+      currentAnswer = q.answer
+
+      questionEl.textContent = q.text
+      messageEl.style.display = 'none'
+
+      optionsEl.innerHTML = ''
+      q.options.forEach(opt => {
+        const btn = document.createElement('button')
+        btn.className = 'opt-btn'
+        btn.textContent = opt
+        btn.addEventListener('click', () => {
+          if (opt === currentAnswer) {
+            btn.classList.add('correct')
+            messageEl.textContent = '✅ 正确！太棒了！'
+            messageEl.style.color = 'var(--correct)'
+            messageEl.style.display = 'block'
+            setScore(score + 10)
+          } else {
+            btn.classList.add('wrong')
+            messageEl.textContent = '❌ 不对哦，正确答案是 ' + currentAnswer
+            messageEl.style.color = 'var(--wrong)'
+            messageEl.style.display = 'block'
+          }
+        })
+        optionsEl.appendChild(btn)
+      })
+    }
+
+    function init() {
+      score = 0
+      setScore(0)
+      generateQuestion()
+    }
+
+    nextBtn.addEventListener('click', generateQuestion)
+    resetBtn.addEventListener('click', init)
+    init()
+  </script>
+</body>
+</html>

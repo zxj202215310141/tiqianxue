@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>按比例分配</title>
+  <style>
+    :root{--bg:#ede7f6;--card:#ffffff;--accent:#b39ddb;--accent2:#311b92;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .question{font-size:24px;font-weight:bold;color:var(--accent2);margin:20px 0;text-align:center}
+    .options{display:flex;flex-wrap:wrap;gap:15px;justify-content:center;margin:20px 0}
+    .opt-btn{min-width:150px;padding:10px 20px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:15px;border:none;font-size:20px;font-weight:bold;color:white;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(49,27,146,0.3)}
+    .opt-btn:active{transform:scale(0.95)}
+    .opt-btn.correct{background:var(--correct)}
+    .opt-btn.wrong{background:var(--wrong)}
+    .btn{background:linear-gradient(135deg,var(--accent2),#4527a0);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(49,27,146,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.question{font-size:20px}.opt-btn{min-width:130px;font-size:18px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>📊 按比例分配</h1>
+      <p>把一个数量按照一定的<strong>比</strong>来进行分配，这种方法叫做<strong>按比例分配</strong>。</p>
+      <p style="margin-top:8px">💡 解题步骤：
+        <br>① 求出总份数（各部分比的和）
+        <br>② 求出每份是多少（总数 ÷ 总份数）
+        <br>③ 求出各部分的数量（每份数 × 各部分的份数）</p>
+      <p style="margin-top:8px">🔢 例如：100个苹果按3:2分给小明和小红。总份数=3+2=5，每份=100÷5=20，小明=20×3=60个，小红=20×2=40个。</p>
+      <div style="margin-top:16px;padding:12px;background:#b39ddb;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        解决按比例分配的实际问题！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>📊 按比例分配挑战</h2>
+      <div class="hint">计算并选择正确答案</div>
+
+      <div class="question" id="question"></div>
+
+      <div class="options" id="options"></div>
+
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questionEl = document.getElementById('question')
+    const optionsEl = document.getElementById('options')
+    const nextBtn = document.getElementById('next')
+    const resetBtn = document.getElementById('reset')
+    const scoreEl = document.getElementById('scoreVal')
+    const messageEl = document.getElementById('message')
+
+    let score = 0
+    let currentAnswer = ''
+
+    const questions = [
+      { text: '将60本书按1:2分给甲乙两个班，甲班分得多少本？', options: ['20本', '30本', '40本', '45本'], answer: '20本' },
+      { text: '学校把120棵树按3:5分给五年级和六年级，五年级分得多少棵？', options: ['40棵', '45棵', '50棵', '75棵'], answer: '45棵' },
+      { text: '一块地按7:3种小麦和玉米，共10亩，小麦种多少亩？', options: ['3亩', '5亩', '7亩', '10亩'], answer: '7亩' },
+      { text: '妈妈把360元按4:5分给小明和小红，小红得多少元？', options: ['160元', '180元', '200元', '240元'], answer: '200元' },
+      { text: '配制200克糖水，糖和水的比是1:9，需要多少克糖？', options: ['10克', '18克', '20克', '25克'], answer: '20克' },
+      { text: '学校图书馆有750本书，按3:2分给科技类和文学类，科技类有多少本？', options: ['300本', '350本', '400本', '450本'], answer: '450本' },
+      { text: '小明和小红共有90元，按2:3的比例分，小明得多少？', options: ['30元', '36元', '45元', '54元'], answer: '36元' },
+      { text: '把100个乒乓球按3:7放入两个盒子，多的盒子有多少个？', options: ['30个', '50个', '60个', '70个'], answer: '70个' },
+      { text: '水泥、沙子、石子按2:3:5配制200吨混凝土，需要沙子多少吨？', options: ['40吨', '50吨', '60吨', '100吨'], answer: '60吨' },
+      { text: '180人参加运动会，按1:2:3分到三个方阵，最多的方阵多少人？', options: ['30人', '60人', '90人', '120人'], answer: '90人' },
+      { text: '按2:3:5把300元分给小王、小李和小张，小李分得多少？', options: ['60元', '90元', '120元', '150元'], answer: '90元' },
+      { text: '一种合金，铜和锌的比是7:3，现有400克合金，含铜多少克？', options: ['120克', '160克', '200克', '280克'], answer: '280克' }
+    ]
+
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+
+    function generateQuestion() {
+      const index = Math.floor(Math.random() * questions.length)
+      const q = questions[index]
+      currentAnswer = q.answer
+
+      questionEl.textContent = q.text
+      messageEl.style.display = 'none'
+
+      optionsEl.innerHTML = ''
+      q.options.forEach(opt => {
+        const btn = document.createElement('button')
+        btn.className = 'opt-btn'
+        btn.textContent = opt
+        btn.addEventListener('click', () => {
+          if (opt === currentAnswer) {
+            btn.classList.add('correct')
+            messageEl.textContent = '✅ 正确！太棒了！'
+            messageEl.style.color = 'var(--correct)'
+            messageEl.style.display = 'block'
+            setScore(score + 10)
+          } else {
+            btn.classList.add('wrong')
+            messageEl.textContent = '❌ 不对哦，正确答案是 ' + currentAnswer
+            messageEl.style.color = 'var(--wrong)'
+            messageEl.style.display = 'block'
+          }
+        })
+        optionsEl.appendChild(btn)
+      })
+    }
+
+    function init() {
+      score = 0
+      setScore(0)
+      generateQuestion()
+    }
+
+    nextBtn.addEventListener('click', generateQuestion)
+    resetBtn.addEventListener('click', init)
+    init()
+  </script>
+</body>
+</html>

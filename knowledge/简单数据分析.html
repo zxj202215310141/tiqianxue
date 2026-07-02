@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>简单数据分析</title>
+  <style>
+    :root{--bg:#e8eaf6;--card:#ffffff;--accent:#9fa8da;--accent2:#283593;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .data-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:15px}
+    .data-table th{background:var(--accent2);color:white;padding:10px 8px;border-radius:4px}
+    .data-table td{padding:8px;text-align:center;border-bottom:1px solid #e0e0e0;background:white}
+    .data-table tr:nth-child(even) td{background:#f5f5f5}
+    .data-table tr:hover td{background:#e8eaf6}
+    .table-wrap{width:100%;overflow-x:auto;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+    .question-box{font-size:18px;font-weight:bold;color:var(--accent2);margin:12px 0;text-align:center;padding:10px 16px;background:#e8eaf6;border-radius:10px;width:100%}
+    .options-row{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0;justify-content:center}
+    .opt-btn{min-width:90px;padding:10px 16px;border:3px solid #e0e0e0;border-radius:12px;background:white;font-size:16px;font-weight:bold;cursor:pointer;transition:all 0.3s}
+    .opt-btn:hover{border-color:var(--accent2);background:#e8eaf6;transform:translateY(-2px)}
+    .opt-btn.correct{border-color:var(--correct);background:var(--correct);color:white;animation:pulse 0.5s}
+    .opt-btn.wrong{border-color:var(--wrong);background:var(--wrong);color:white;animation:shake 0.4s}
+    .btn{background:linear-gradient(135deg,var(--accent2),#5c6bc0);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(40,53,147,0.3)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:12px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.data-table{font-size:13px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>📈 简单数据分析</h1>
+      <p>数据分析是指通过观察、整理、计算和比较数据，从中提取<strong>有用信息</strong>并做出判断的过程。</p>
+      <p style="margin-top:8px">📐 分析步骤：<br>① <strong>观察</strong>数据表格或图表<br>② <strong>比较</strong>数值大小、找出最高/最低<br>③ <strong>计算</strong>总数、差值、倍数等<br>④ <strong>得出结论</strong>，回答具体问题</p>
+      <p style="margin-top:8px">💡 生活中常见的数据分析：考试成绩分析、天气预报、销售统计等。</p>
+      <div style="margin-top:16px;padding:12px;background:#c5cae9;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        仔细阅读下面的数据表格，然后回答右侧的问题。考验你的数据分析能力！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>📈 数据分析大挑战</h2>
+      <div class="hint">观察表格数据，回答分析问题</div>
+      <div class="table-wrap">
+        <table class="data-table" id="dataTable"></table>
+      </div>
+      <div class="question-box" id="question"></div>
+      <div class="options-row" id="optionsRow"></div>
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      <div id="msg" style="margin-top:12px;font-weight:bold;font-size:20px;display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const dataTable=document.getElementById('dataTable'),questionEl=document.getElementById('question'),
+      optionsRow=document.getElementById('optionsRow'),scoreEl=document.getElementById('scoreVal'),msgEl=document.getElementById('msg');
+    let score=0,locked=false,currentAnswer=null;
+
+    function setScore(v){score=v;scoreEl.textContent=score}
+    function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+    const scenarios=[
+      {
+        title:'四（1）班数学成绩',
+        headers:['姓名','小明','小红','小刚','小丽','小华'],
+        data:[['成绩',92,85,98,78,88]],
+        question:'谁的成绩最高？',
+        answer:'小刚',
+        distractors:['小明','小红','小华']
+      },{
+        title:'水果店一周销量（个）',
+        headers:['水果','苹果','香蕉','橘子','葡萄','西瓜'],
+        data:[['销量',45,62,38,25,18]],
+        question:'哪种水果卖得最多？',
+        answer:'香蕉',
+        distractors:['苹果','橘子','西瓜']
+      },{
+        title:'运动会跑步成绩（秒）',
+        headers:['选手','A','B','C','D','E'],
+        data:[['时间',12.5,14.2,11.8,13.0,15.1]],
+        question:'谁跑得最快（时间最短）？',
+        answer:'C',
+        distractors:['A','B','E']
+      },{
+        title:'图书馆借书统计（本）',
+        headers:['类别','文学','科学','历史','漫画','数学'],
+        data:[['数量',35,28,15,42,22]],
+        question:'借出最多的是哪类书？',
+        answer:'漫画',
+        distractors:['文学','科学','数学']
+      },{
+        title:'各年级学生人数',
+        headers:['年级','一年级','二年级','三年级','四年级','五年级'],
+        data:[['人数',180,165,172,158,170]],
+        question:'哪个年级人数最少？',
+        answer:'四年级',
+        distractors:['二年级','三年级','五年级']
+      }
+    ];
+
+    function gen(){
+      locked=false;msgEl.style.display='none';
+      const s=scenarios[Math.floor(Math.random()*scenarios.length)];
+      currentAnswer=s.answer;
+      questionEl.textContent='❓ '+s.question;
+
+      let html='<thead><tr><th>'+s.title+'</th>'+s.headers.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>';
+      s.data.forEach(row=>{html+='<tr>'+row.map(c=>'<td>'+c+'</td>').join('')+'</tr>'});
+      html+='</tbody>';
+      dataTable.innerHTML=html;
+
+      optionsRow.innerHTML='';
+      const opts=shuffle([s.answer,...s.distractors]);
+      opts.forEach(v=>{
+        const btn=document.createElement('button');btn.className='opt-btn';btn.textContent=v;
+        btn.addEventListener('click',()=>handleAnswer(v,btn));optionsRow.appendChild(btn);
+      });
+    }
+
+    function handleAnswer(val,btn){
+      if(locked)return;
+      if(val===currentAnswer){
+        btn.classList.add('correct');locked=true;
+        msgEl.textContent='✅ 正确！通过分析数据找到了正确答案！';
+        msgEl.style.color='var(--correct)';msgEl.style.display='block';
+        setScore(score+10);setTimeout(gen,1500);
+      }else{
+        btn.classList.add('wrong');setTimeout(()=>btn.classList.remove('wrong'),400);
+        setScore(Math.max(0,score-3));
+      }
+    }
+
+    function init(){score=0;setScore(0);gen()}
+    document.getElementById('next').onclick=gen;
+    init();
+  </script>
+</body>
+</html>

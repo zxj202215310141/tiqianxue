@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>图形放大与缩小</title>
+  <style>
+    :root{--bg:#ede7f6;--card:#ffffff;--accent:#b39ddb;--accent2:#5e35b1;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .scale-display{display:flex;gap:24px;align-items:center;margin:16px 0;flex-wrap:wrap;justify-content:center}
+    .original-box{border:3px solid #bdbdbd;border-radius:12px;padding:12px;text-align:center;background:#fafafa}
+    .scaled-box{border:3px dashed var(--accent2);border-radius:12px;padding:12px;text-align:center;background:#ede7f6;min-width:80px;min-height:80px;display:flex;align-items:center;justify-content:center}
+    .grid-canvas{display:grid;gap:2px;margin:12px 0;background:#e0e0e0;padding:4px;border-radius:8px}
+    .g-cell{width:28px;height:28px;border-radius:2px;background:#f5f5f5;border:1px solid #eee}
+    .g-cell.original{background:linear-gradient(135deg,var(--accent2),#7c4dff)}
+    .g-cell.scaled{background:linear-gradient(135deg,#ff9800,#ffb74d)}
+    .options-bar{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0;justify-content:center}
+    .scale-btn{width:80px;padding:10px;border:3px solid #e0e0e0;border-radius:12px;background:white;font-size:18px;font-weight:bold;color:var(--text);cursor:pointer;transition:all 0.3s}
+    .scale-btn:hover{border-color:var(--accent2);background:#ede7f6;transform:translateY(-2px)}
+    .scale-btn.correct{border-color:var(--correct);background:var(--correct);color:white;animation:pulse 0.5s}
+    .scale-btn.wrong{border-color:var(--wrong);background:var(--wrong);color:white;animation:shake 0.4s}
+    .question{font-size:20px;font-weight:bold;color:var(--accent2);margin:12px 0;text-align:center}
+    .btn{background:linear-gradient(135deg,var(--accent2),#7c4dff);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(94,53,177,0.3)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:12px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.g-cell{width:22px;height:22px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🔍 图形放大与缩小</h1>
+      <p>图形放大与缩小是指<strong>保持图形的形状不变</strong>，按照一定比例改变图形的大小。</p>
+      <p style="margin-top:8px">📐 放大：每条边都按相同比例变长。如按 2:1 放大，每条边变为原来的<strong>2倍</strong>，面积变为原来的<strong>4倍</strong>。</p>
+      <p style="margin-top:8px">📐 缩小：每条边都按相同比例变短。如按 1:2 缩小，每条边变为原来的<strong>一半</strong>，面积变为原来的<strong>1/4</strong>。</p>
+      <p style="margin-top:8px">💡 关键：放大或缩小后，图形的<strong>形状（角度）不变</strong>，只有<strong>大小改变</strong>。</p>
+      <div style="margin-top:16px;padding:12px;background:#d1c4e9;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        观察左侧原始图形和右侧变换后的图形，判断是按照什么比例放大或缩小的！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🔍 缩放侦探</h2>
+      <div class="hint">判断图形的缩放比例</div>
+      <div class="question" id="question"></div>
+      <div class="scale-display">
+        <div class="original-box">
+          <div style="font-weight:bold;color:#666">原图</div>
+          <div class="grid-canvas" id="originalGrid"></div>
+        </div>
+        <div style="font-size:28px;color:var(--accent2)">→</div>
+        <div class="scaled-box">
+          <div style="font-weight:bold;color:var(--accent2)">变换后</div>
+          <div class="grid-canvas" id="scaledGrid"></div>
+        </div>
+      </div>
+      <div class="options-bar" id="optionsBar"></div>
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      <div id="msg" style="margin-top:12px;font-weight:bold;font-size:20px;display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const origGrid=document.getElementById('originalGrid'),scaledGrid=document.getElementById('scaledGrid'),
+      optionsBar=document.getElementById('optionsBar'),scoreEl=document.getElementById('scoreVal'),
+      msgEl=document.getElementById('msg'),questionEl=document.getElementById('question');
+    let score=0,locked=false,currentAnswer=null;
+
+    function setScore(v){score=v;scoreEl.textContent=score}
+
+    const shapes=[
+      {cells:[[0,0],[0,1],[1,0],[1,1]],name:'正方形'},
+      {cells:[[0,0],[0,1],[0,2],[1,0],[1,1],[1,2]],name:'长方形'},
+      {cells:[[0,0],[1,0],[2,0]],name:'竖条'},
+    ];
+
+    const scales=[{label:'放大 2 倍 (2:1)',factor:2},{label:'放大 3 倍 (3:1)',factor:3},
+      {label:'缩小 1/2 (1:2)',factor:0.5},{label:'缩小 1/3 (1:3)',factor:0.33}];
+
+    function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+    function drawShape(container,cells,colorClass,rows,cols){
+      container.style.gridTemplateColumns='repeat('+cols+',1fr)';container.innerHTML='';
+      for(let r=0;r<rows;r++){
+        for(let c=0;c<cols;c++){
+          const cell=document.createElement('div');cell.className='g-cell';
+          if(cells.some(([cr,cc])=>cr===r&&cc===c))cell.classList.add(colorClass);
+          container.appendChild(cell);
+        }
+      }
+    }
+
+    function gen(){
+      locked=false;msgEl.style.display='none';
+      const shape=shapes[Math.floor(Math.random()*shapes.length)];
+      const scale=scales[Math.floor(Math.random()*scales.length)];
+      currentAnswer=scale;
+      questionEl.textContent='原图 '+shape.name+' 按什么比例变成了右边的图形？';
+
+      const maxR=Math.max(...shape.cells.map(([r])=>r));
+      const maxC=Math.max(...shape.cells.map(([,c])=>c));
+      const origRows=maxR+2,origCols=maxC+2;
+      drawShape(origGrid,shape.cells,'original',origRows,origCols);
+
+      const sf=scale.factor;
+      const scaledCells=shape.cells.map(([r,c])=>[Math.round(r*sf),Math.round(c*sf)]);
+      const sMaxR=Math.max(...scaledCells.map(([r])=>r));
+      const sMaxC=Math.max(...scaledCells.map(([,c])=>c));
+      drawShape(scaledGrid,scaledCells,'scaled',sMaxR+2,sMaxC+2);
+
+      optionsBar.innerHTML='';
+      const opts=shuffle([scale.label,scales[(scales.indexOf(scale)+1)%4].label,scales[(scales.indexOf(scale)+2)%4].label,scales[(scales.indexOf(scale)+3)%4].label]);
+      opts.forEach(l=>{
+        const btn=document.createElement('button');btn.className='scale-btn';btn.textContent=l;
+        btn.addEventListener('click',()=>handleAnswer(l,btn));optionsBar.appendChild(btn);
+      });
+    }
+
+    function handleAnswer(label,btn){
+      if(locked)return;
+      if(label===currentAnswer.label){
+        btn.classList.add('correct');locked=true;
+        msgEl.textContent='✅ 正确！图形按 '+currentAnswer.label+' 的比例缩放！';
+        msgEl.style.color='var(--correct)';msgEl.style.display='block';
+        setScore(score+10);setTimeout(gen,1500);
+      }else{
+        btn.classList.add('wrong');setTimeout(()=>btn.classList.remove('wrong'),400);
+        setScore(Math.max(0,score-3));
+      }
+    }
+
+    function init(){score=0;setScore(0);gen()}
+    document.getElementById('next').onclick=gen;
+    init();
+  </script>
+</body>
+</html>

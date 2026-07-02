@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>策略游戏</title>
+  <style>
+    :root{--bg:#e8f5e9;--card:#ffffff;--accent:#a5d6a7;--accent2:#2e7d32;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .piles{display:flex;gap:20px;margin:16px 0;flex-wrap:wrap;justify-content:center}
+    .pile{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;transition:all 0.3s;padding:8px;border-radius:12px}
+    .pile:hover{background:#e8f5e9}
+    .pile.selected{border:3px solid var(--accent2);background:#c8e6c9}
+    .stones-row{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
+    .stone{width:30px;height:30px;background:linear-gradient(135deg,#795548,#8d6e63);border-radius:50%;box-shadow:0 3px 6px rgba(0,0,0,0.2);transition:all 0.3s}
+    .stone.removing{opacity:0;transform:scale(0)}
+    .pile-label{font-size:14px;font-weight:bold;color:#555}
+    .game-info{font-size:16px;color:#666;margin:8px 0;text-align:center}
+    .take-btns{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap;justify-content:center}
+    .take-btn{width:60px;height:50px;border:3px solid #e0e0e0;border-radius:10px;background:white;font-size:20px;font-weight:bold;cursor:pointer;transition:all 0.3s}
+    .take-btn:hover{border-color:var(--accent2);background:#e8f5e9;transform:translateY(-2px)}
+    .take-btn:disabled{opacity:0.3;cursor:not-allowed}
+    .btn{background:linear-gradient(135deg,var(--accent2),#43a047);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(46,125,50,0.3)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:12px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.stone{width:24px;height:24px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🧠 策略游戏</h1>
+      <p>数学策略游戏是在特定规则下，通过<strong>分析、推理和规划</strong>来取得胜利的智力游戏。核心在于找到<strong>最优策略</strong>。</p>
+      <p style="margin-top:8px">🎯 经典策略游戏：<br>• <strong>Nim取石子</strong>：两人轮流取石子，取走最后一个的获胜<br>• <strong>抢数字</strong>：轮流报数，先到目标数者胜<br>• <strong>田忌赛马</strong>：合理安排资源以弱胜强</p>
+      <p style="margin-top:8px">💡 策略游戏的秘诀：找到"<strong>必胜局面</strong>"，即无论对手怎么走你都能赢的状态。</p>
+      <div style="margin-top:16px;padding:12px;background:#c8e6c9;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        <strong>取石子游戏</strong>：有三堆石子，你和电脑轮流取。每次可从任一堆中取1-3颗。取走最后一颗石子的人获胜！先选择一堆，再选择取几颗。
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🧠 取石子策略游戏</h2>
+      <div class="hint">每次从一堆中取1-3颗，拿走最后一颗者获胜</div>
+      <div class="game-info" id="gameInfo">🔴 你的回合：先选一堆，再选取走几颗</div>
+      <div class="piles" id="piles"></div>
+      <div class="take-btns" id="takeBtns"></div>
+      <div class="row">
+        <button id="restart" class="btn">🔄 重新开始</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      <div id="msg" style="margin-top:12px;font-weight:bold;font-size:20px;display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const pilesEl=document.getElementById('piles'),takeBtnsEl=document.getElementById('takeBtns'),
+      gameInfoEl=document.getElementById('gameInfo'),scoreEl=document.getElementById('scoreVal'),msgEl=document.getElementById('msg');
+    let piles=[],score=0,selectedPile=-1,gameOver=false,playerTurn=true;
+
+    function setScore(v){score=v;scoreEl.textContent=score}
+
+    function totalStones(){return piles.reduce((a,b)=>a+b,0)}
+
+    function renderPiles(){
+      pilesEl.innerHTML='';
+      piles.forEach((count,i)=>{
+        const pile=document.createElement('div');pile.className='pile'+(selectedPile===i?' selected':'');
+        const stones=document.createElement('div');stones.className='stones-row';
+        for(let j=0;j<count;j++){const s=document.createElement('div');s.className='stone';stones.appendChild(s)}
+        const lbl=document.createElement('div');lbl.className='pile-label';lbl.textContent='第'+(i+1)+'堆（'+count+'颗）';
+        pile.appendChild(stones);pile.appendChild(lbl);
+        pile.addEventListener('click',()=>selectPile(i));
+        pilesEl.appendChild(pile);
+      });
+      updateTakeBtns();
+    }
+
+    function selectPile(i){
+      if(!playerTurn||gameOver||piles[i]===0)return;
+      selectedPile=i;renderPiles();
+    }
+
+    function updateTakeBtns(){
+      takeBtnsEl.innerHTML='';
+      if(selectedPile<0||!playerTurn||gameOver){takeBtnsEl.innerHTML='<span style="color:#999">请先选择一堆</span>';return}
+      const max=Math.min(3,piles[selectedPile]);
+      for(let n=1;n<=max;n++){
+        const btn=document.createElement('button');btn.className='take-btn';btn.textContent=n;
+        btn.addEventListener('click',()=>playerTake(n));takeBtnsEl.appendChild(btn);
+      }
+    }
+
+    function playerTake(n){
+      if(!playerTurn||gameOver||selectedPile<0)return;
+      piles[selectedPile]-=n;selectedPile=-1;renderPiles();
+      if(totalStones()===0){gameOver=true;setScore(score+50);msgEl.textContent='🎉 你赢了！你拿走了最后一颗石子！';msgEl.style.color='var(--correct)';msgEl.style.display='block';return}
+      playerTurn=false;gameInfoEl.textContent='🔵 电脑思考中...';
+      setTimeout(aiMove,800);
+    }
+
+    function aiMove(){
+      if(gameOver)return;
+      const nonEmpty=piles.map((c,i)=>({c,i})).filter(p=>p.c>0);
+      const target=nonEmpty[Math.floor(Math.random()*nonEmpty.length)];
+      const take=1+Math.floor(Math.random()*Math.min(3,target.c));
+      piles[target.i]-=take;renderPiles();
+      if(totalStones()===0){gameOver=true;gameInfoEl.textContent='';msgEl.textContent='😔 电脑拿走了最后一颗石子，你输了！';msgEl.style.color='var(--wrong)';msgEl.style.display='block';setScore(Math.max(0,score-10));return}
+      playerTurn=true;selectedPile=-1;gameInfoEl.textContent='🔴 你的回合：先选一堆，再选取走几颗';renderPiles();
+    }
+
+    function init(){
+      piles=[3+Math.floor(Math.random()*4),3+Math.floor(Math.random()*4),3+Math.floor(Math.random()*4)];
+      score=0;setScore(0);selectedPile=-1;gameOver=false;playerTurn=true;
+      gameInfoEl.textContent='🔴 你的回合：先选一堆，再选取走几颗';msgEl.style.display='none';
+      renderPiles();
+    }
+
+    document.getElementById('restart').onclick=init;
+    init();
+  </script>
+</body>
+</html>

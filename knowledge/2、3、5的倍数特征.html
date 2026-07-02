@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>2、3、5的倍数特征</title>
+  <style>
+    :root{--bg:#fff8e1;--card:#ffffff;--accent:#ffe082;--accent2:#e65100;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .question{font-size:26px;font-weight:bold;color:var(--accent2);margin:20px 0;text-align:center}
+    .options{display:flex;flex-wrap:wrap;gap:15px;justify-content:center;margin:20px 0}
+    .opt-btn{min-width:150px;padding:10px 20px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:15px;border:none;font-size:20px;font-weight:bold;color:white;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(230,81,0,0.3)}
+    .opt-btn:active{transform:scale(0.95)}
+    .opt-btn.correct{background:var(--correct)}
+    .opt-btn.wrong{background:var(--wrong)}
+    .btn{background:linear-gradient(135deg,var(--accent2),#ff7043);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(230,81,0,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.question{font-size:22px}.opt-btn{min-width:130px;font-size:18px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>🔍 2、3、5的倍数特征</h1>
+      <p>不用除法，直接判断一个数是不是2、3、5的倍数：</p>
+      <p style="margin-top:8px">
+        💡 <strong>2的倍数特征：</strong>个位上是0、2、4、6、8的数。<br>
+        💡 <strong>5的倍数特征：</strong>个位上是0或5的数。<br>
+        💡 <strong>3的倍数特征：</strong>各位上数字之和是3的倍数。</p>
+      <p style="margin-top:8px">🔢 例如：<br>124个位是4→是2的倍数<br>135个位是5→是5的倍数<br>1+2+3=6是3的倍数→123是3的倍数</p>
+      <div style="margin-top:16px;padding:12px;background:#ffe082;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        判断一个数是不是2、3或5的倍数！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🔍 倍数特征挑战</h2>
+      <div class="hint">选择正确的答案</div>
+
+      <div class="question" id="question"></div>
+
+      <div class="options" id="options"></div>
+
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <button id="reset" class="btn">🔄 重置</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questionEl = document.getElementById('question')
+    const optionsEl = document.getElementById('options')
+    const nextBtn = document.getElementById('next')
+    const resetBtn = document.getElementById('reset')
+    const scoreEl = document.getElementById('scoreVal')
+    const messageEl = document.getElementById('message')
+
+    let score = 0
+    let currentAnswer = ''
+
+    const questions = [
+      { text: '135是3的倍数吗？', options: ['是', '不是'], answer: '是' },
+      { text: '248是2的倍数吗？', options: ['是', '不是'], answer: '是' },
+      { text: '370是5的倍数吗？', options: ['是', '不是'], answer: '是' },
+      { text: '147是2的倍数吗？', options: ['是', '不是'], answer: '不是' },
+      { text: '下列哪个数同时是2和5的倍数？', options: ['25', '30', '35', '45'], answer: '30' },
+      { text: '256是3的倍数吗？', options: ['是', '不是'], answer: '不是' },
+      { text: '下列哪个数同时是2和3的倍数？', options: ['14', '18', '22', '26'], answer: '18' },
+      { text: '下列哪个数同时是3和5的倍数？', options: ['20', '25', '30', '35'], answer: '30' },
+      { text: '下列哪个数同时是2、3、5的倍数？', options: ['20', '25', '30', '35'], answer: '30' },
+      { text: '要使4□2是3的倍数，□里可以填？', options: ['1', '2', '4', '5'], answer: '1' },
+      { text: '个位上是0的数，一定是谁的倍数？', options: ['只是2的倍数', '只是5的倍数', '既是2的倍数也是5的倍数', '是3的倍数'], answer: '既是2的倍数也是5的倍数' },
+      { text: '一个数是3的倍数，它的各位数字之和？', options: ['一定是偶数', '一定是奇数', '一定是3的倍数', '不一定是3的倍数'], answer: '一定是3的倍数' }
+    ]
+
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+
+    function generateQuestion() {
+      const index = Math.floor(Math.random() * questions.length)
+      const q = questions[index]
+      currentAnswer = q.answer
+
+      questionEl.textContent = q.text
+      messageEl.style.display = 'none'
+
+      optionsEl.innerHTML = ''
+      q.options.forEach(opt => {
+        const btn = document.createElement('button')
+        btn.className = 'opt-btn'
+        btn.textContent = opt
+        btn.addEventListener('click', () => {
+          if (opt === currentAnswer) {
+            btn.classList.add('correct')
+            messageEl.textContent = '✅ 正确！太棒了！'
+            messageEl.style.color = 'var(--correct)'
+            messageEl.style.display = 'block'
+            setScore(score + 10)
+          } else {
+            btn.classList.add('wrong')
+            messageEl.textContent = '❌ 不对哦，正确答案是 ' + currentAnswer
+            messageEl.style.color = 'var(--wrong)'
+            messageEl.style.display = 'block'
+          }
+        })
+        optionsEl.appendChild(btn)
+      })
+    }
+
+    function init() {
+      score = 0
+      setScore(0)
+      generateQuestion()
+    }
+
+    nextBtn.addEventListener('click', generateQuestion)
+    resetBtn.addEventListener('click', init)
+    init()
+  </script>
+</body>
+</html>

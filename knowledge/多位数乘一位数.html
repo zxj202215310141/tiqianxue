@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>多位数乘一位数</title>
+  <style>
+    :root{--bg:#fff3e0;--card:#ffffff;--accent:#ffcc80;--accent2:#ff9800;--text:#2d3436;--correct:#00b894;--wrong:#e17055}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .equation{font-size:36px;font-weight:bold;color:var(--accent2);margin:20px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center}
+    .answer-box{width:100px;height:70px;border:3px dashed var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:32px;color:var(--accent2);background:var(--card);min-width:80px}
+    .answer-box.correct{border-color:var(--correct);background:var(--correct);color:white}
+    .answer-box.wrong{border-color:var(--wrong);background:var(--wrong);color:white}
+    .number-tiles{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0;justify-content:center}
+    .tile{width:65px;height:65px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:bold;color:white;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 8px rgba(0,0,0,0.15);border:none}
+    .tile:hover{transform:translateY(-3px);box-shadow:0 8px 16px rgba(0,0,0,0.25)}
+    .tile:active{transform:scale(0.95)}
+    .tile.selected{outline:3px solid white;outline-offset:2px}
+    .btn{background:linear-gradient(135deg,var(--accent2),var(--accent));color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(0,0,0,0.15)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:12px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#636e72;margin-top:8px;text-align:center}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.equation{font-size:28px}.tile{width:55px;height:55px;font-size:24px}.answer-box{width:80px;height:60px;font-size:24px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>✖️ 多位数乘一位数</h1>
+      <p>多位数乘一位数是乘法的重要应用。</p><p style="margin-top:8px">💡 用一位数分别去乘多位数的每一位，注意进位。</p><div style="margin-top:16px;padding:12px;background:#ffcc80;border-radius:10px"><strong>🎮 游戏说明：</strong><br>点击下方数字来选择正确答案，答对得分！</div>
+    </div>
+    <div class="card game">
+      <h2>🎯 答题挑战</h2>
+      <div class="hint">点击下方数字来选择答案</div>
+      <div class="equation">
+        <span id="num1">0</span>
+        <span id="op">+</span>
+        <span id="num2">0</span>
+        <span>=</span>
+        <div class="answer-box" id="answerBox">?</div>
+      </div>
+      <div class="number-tiles" id="tiles"></div>
+      <div class="row">
+        <button id="next" class="btn">➡️ 下一题</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      <div id="msg" style="margin-top:12px;font-weight:bold;font-size:20px;display:none"></div>
+    </div>
+  </div>
+  <script>
+    const num1El=document.getElementById('num1'),num2El=document.getElementById('num2'),opEl=document.getElementById('op'),
+      answerBox=document.getElementById('answerBox'),tilesEl=document.getElementById('tiles'),
+      scoreEl=document.getElementById('scoreVal'),msgEl=document.getElementById('msg');
+    let score=0,currentAnswer=null,locked=false;
+
+    function setScore(v){score=v;scoreEl.textContent=score}
+    const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+    
+    function gen(){locked=false;const a=Math.floor(Math.random()*9)+1;const b=Math.floor(Math.random()*90)+10;num1El.textContent=a;num2El.textContent=b;opEl.textContent='×';currentAnswer=a*b;answerBox.textContent='?';answerBox.className='answer-box';msgEl.style.display='none';const pool=[currentAnswer];while(pool.length<6){const r=Math.floor(Math.random()*1000);if(!pool.includes(r))pool.push(r)}const tiles=shuffle(pool);tilesEl.innerHTML='';tiles.forEach(n=>{const t=document.createElement('button');t.className='tile';t.textContent=n;t.onclick=()=>select(n,t);tilesEl.appendChild(t)})}
+    
+    function select(num,tile){
+      if(locked)return;
+      answerBox.textContent=num;
+      document.querySelectorAll('.tile').forEach(t=>t.classList.remove('selected'));
+      tile.classList.add('selected');
+      if(String(num)===String(currentAnswer)){
+        answerBox.className='answer-box correct';
+        msgEl.textContent='✅ 正确！太棒了！';
+        msgEl.style.color='var(--correct)';msgEl.style.display='block';
+        locked=true;setScore(score+10);
+        setTimeout(gen,1200);
+      }else{
+        answerBox.className='answer-box wrong';
+        msgEl.textContent='❌ 不对哦，再试试！';
+        msgEl.style.color='var(--wrong)';msgEl.style.display='block';
+        setTimeout(()=>{answerBox.textContent='?';answerBox.className='answer-box';msgEl.style.display='none'},800);
+      }
+    }
+    function init(){score=0;setScore(0);gen()}
+    document.getElementById('next').onclick=gen;
+    init();
+  </script>
+</body>
+</html>

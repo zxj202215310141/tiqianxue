@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>认识平面图形</title>
+  <style>
+    :root{--bg:#f0fdf4;--card:#ffffff;--accent:#4ade80;--accent2:#22c55e;--text:#1f2937;--correct:#06b6d4;--wrong:#f87171}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);padding:12px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+    h1{margin:0 0 12px 0;color:var(--accent2)}
+    h2{margin:0 0 12px 0;color:var(--accent2)}
+    .knowledge{min-height:260px}
+    .game{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .shape-board{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}
+    .shape-item{width:90px;height:90px;border:3px dashed #cbd5e1;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#64748b;transition:all 0.3s}
+    .shape-item.filled{border-color:var(--correct);background:var(--correct);color:white}
+    .shape-item.filled.wrong{border-color:var(--wrong);background:var(--wrong)}
+    .shape-piece{width:90px;height:90px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:bold;color:white;cursor:grab;transition:transform 0.2s;box-shadow:0 4px 8px rgba(0,0,0,0.15)}
+    .shape-piece:active{cursor:grabbing;transform:scale(1.08)}
+    .shape-icon{font-size:36px;margin-bottom:4px}
+    .question{font-size:18px;font-weight:bold;color:var(--accent2);margin:16px 0;text-align:center}
+    .btn{background:linear-gradient(135deg,var(--accent2),#16a34a);color:white;padding:10px 20px;border-radius:12px;border:none;font-size:16px;cursor:pointer;transition:transform 0.2s;box-shadow:0 4px 8px rgba(34,197,94,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .row{display:flex;gap:12px;margin-top:16px;align-items:center}
+    .score{font-size:18px;font-weight:bold;color:var(--accent2)}
+    .hint{font-size:14px;color:#64748b;margin-top:8px;text-align:center}
+    .shape-name{font-size:14px;margin-top:4px}
+    @keyframes bounce{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.shape-item,.shape-piece{width:75px;height:75px}.shape-icon{font-size:28px}}
+    @media(max-width:400px){.shape-item,.shape-piece{width:65px;height:65px}.shape-icon{font-size:24px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card knowledge">
+      <h1>📐 认识平面图形</h1>
+      <p>平面图形是指在一个平面上的图形，它们都有不同的形状和特点。</p>
+      <p style="margin-top:8px">🔸 <strong>圆形</strong>：没有角，边缘是光滑的曲线，像一个圆圆的盘子。</p>
+      <p>🔸 <strong>三角形</strong>：有3条边和3个角，像一个屋顶的形状。</p>
+      <p>🔸 <strong>正方形</strong>：有4条相等的边和4个直角，方方正正的。</p>
+      <p>🔸 <strong>长方形</strong>：有4条边，对边相等，4个都是直角。</p>
+      <p>🔸 <strong>平行四边形</strong>：有4条边，对边平行且相等，像一个倾斜的长方形。</p>
+      <p>🔸 <strong>梯形</strong>：有4条边，只有一组对边平行。</p>
+      <div style="margin-top:16px;padding:12px;background:#dcfce7;border-radius:10px">
+        <strong>🎮 游戏说明：</strong><br>
+        将下方的图形拖到正确的名称框中，认识不同的平面图形！
+      </div>
+    </div>
+
+    <div class="card game">
+      <h2>🧩 图形分类游戏</h2>
+      <div class="hint">把图形拖到对应的名称框中</div>
+      
+      <div class="question">请将图形拖到正确的名称下：</div>
+      
+      <div class="shape-board" id="targetBoard"></div>
+      
+      <div class="shape-board" id="pieceBoard"></div>
+      
+      <div class="row">
+        <button id="reset" class="btn">🔄 重置游戏</button>
+        <div class="score">⭐ 得分：<span id="scoreVal">0</span></div>
+      </div>
+      
+      <div id="message" style="margin-top:12px;font-weight:bold;font-size:20px;color:var(--correct);display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    const targetBoardEl = document.getElementById('targetBoard')
+    const pieceBoardEl = document.getElementById('pieceBoard')
+    const scoreEl = document.getElementById('scoreVal')
+    const resetBtn = document.getElementById('reset')
+    const messageEl = document.getElementById('message')
+    
+    const shapes = [
+      { name: '圆形', icon: '○', color: '#f87171' },
+      { name: '三角形', icon: '△', color: '#fb923c' },
+      { name: '正方形', icon: '□', color: '#fbbf24' },
+      { name: '长方形', icon: '▭', color: '#4ade80' },
+      { name: '平行四边形', icon: '◱', color: '#38bdf8' },
+      { name: '梯形', icon: '⬜', color: '#a78bfa' }
+    ]
+    
+    let score = 0
+    let placed = {}
+    
+    function setScore(v) {
+      score = v
+      scoreEl.textContent = score
+    }
+    
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]]
+      }
+      return array
+    }
+    
+    function init() {
+      score = 0
+      placed = {}
+      setScore(0)
+      messageEl.style.display = 'none'
+      
+      targetBoardEl.innerHTML = ''
+      shapes.forEach(shape => {
+        const slot = document.createElement('div')
+        slot.className = 'shape-item'
+        slot.dataset.name = shape.name
+        slot.innerHTML = `<span style="font-size:14px">${shape.name}</span>`
+        slot.addEventListener('dragover', e => e.preventDefault())
+        slot.addEventListener('drop', handleDrop)
+        targetBoardEl.appendChild(slot)
+      })
+      
+      const shuffledShapes = shuffle([...shapes])
+      pieceBoardEl.innerHTML = ''
+      shuffledShapes.forEach(shape => {
+        const piece = document.createElement('div')
+        piece.className = 'shape-piece'
+        piece.style.background = `linear-gradient(135deg,${shape.color},${adjustColor(shape.color, -30)})`
+        piece.draggable = true
+        piece.innerHTML = `<span class="shape-icon">${shape.icon}</span><span class="shape-name">${shape.name}</span>`
+        piece.id = 'piece-' + shape.name
+        piece.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('name', shape.name)
+          piece.style.opacity = '0.6'
+        })
+        piece.addEventListener('dragend', () => {
+          piece.style.opacity = '1'
+        })
+        pieceBoardEl.appendChild(piece)
+      })
+    }
+    
+    function adjustColor(color, amount) {
+      const hex = color.replace('#', '')
+      const r = Math.max(0, Math.min(255, parseInt(hex.substr(0, 2), 16) + amount))
+      const g = Math.max(0, Math.min(255, parseInt(hex.substr(2, 2), 16) + amount))
+      const b = Math.max(0, Math.min(255, parseInt(hex.substr(4, 2), 16) + amount))
+      return '#' + r.toString(16).padStart(2, '0') + g.toString(16).padStart(2, '0') + b.toString(16).padStart(2, '0')
+    }
+    
+    function handleDrop(e) {
+      e.preventDefault()
+      const name = e.dataTransfer.getData('name')
+      const targetName = e.target.dataset.name || e.target.parentElement.dataset.name
+      
+      if (!targetName || placed[name]) return
+      
+      if (name === targetName) {
+        const piece = document.getElementById('piece-' + name)
+        piece.classList.add('correct')
+        piece.style.opacity = '0'
+        
+        const slot = e.target.classList.contains('shape-item') ? e.target : e.target.parentElement
+        const shape = shapes.find(s => s.name === name)
+        slot.classList.add('filled')
+        slot.innerHTML = `<span style="font-size:28px">${shape.icon}</span><br><span style="font-size:12px">${shape.name}</span>`
+        
+        placed[name] = true
+        setScore(Math.min(100, score + 20))
+        
+        if (Object.keys(placed).length === shapes.length) {
+          setTimeout(() => {
+            messageEl.textContent = '🎉 太棒了！你认识所有图形了！'
+            messageEl.style.display = 'block'
+            messageEl.style.color = '#f97316'
+          }, 300)
+        }
+      } else {
+        const slot = e.target.classList.contains('shape-item') ? e.target : e.target.parentElement
+        slot.style.borderColor = 'var(--wrong)'
+        setTimeout(() => {
+          slot.style.borderColor = '#cbd5e1'
+        }, 500)
+        setScore(Math.max(0, score - 5))
+      }
+    }
+    
+    resetBtn.addEventListener('click', init)
+    init()
+  </script>
+</body>
+</html>
