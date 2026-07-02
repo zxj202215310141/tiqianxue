@@ -6,16 +6,10 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: false
+  contents: write
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,15 +27,17 @@ jobs:
       - name: Build project
         run: cd study && npm run build
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
+      - name: Enable GitHub Pages via API
+        run: |
+          curl -s -X POST https://api.github.com/repos/zxj202215310141/tiqianxue/pages \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            -d '{"source":{"branch":"pages","path":"/"}}' || true
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy to pages branch
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: study/dist
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-# trigger rebuild
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./study/dist
+          publish_branch: pages
+          force_orphan: true
